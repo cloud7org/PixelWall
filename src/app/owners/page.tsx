@@ -49,7 +49,7 @@ export default function OwnersPage() {
               color: '#F5F0E6',
             }}
           >
-            Właściciele pikseli
+            Właściciele pixeli
           </h1>
         </div>
 
@@ -74,7 +74,7 @@ export default function OwnersPage() {
                 fontFamily: 'var(--font-space-grotesk), sans-serif',
               }}
             >
-              Kup piksele →
+              Kup pixele →
             </Link>
           </div>
         ) : (

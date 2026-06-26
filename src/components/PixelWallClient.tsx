@@ -109,7 +109,7 @@ export default function PixelWallClient() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, letterSpacing: '0.1em', color: '#B7B2A4', textTransform: 'uppercase' }}>
-            Sprzedane piksele
+            Sprzedane pixele
           </span>
           <PixelCounter value={soldPixels} color="red" />
         </div>
@@ -118,7 +118,7 @@ export default function PixelWallClient() {
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, letterSpacing: '0.1em', color: '#B7B2A4', textTransform: 'uppercase' }}>
-            Wolne piksele
+            Wolne pixele
           </span>
           <PixelCounter value={freePixels} color="green" />
         </div>

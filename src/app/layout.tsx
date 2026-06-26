@@ -21,8 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Pixel Wall — Milion pikseli, jeden internet',
-  description: 'Kup kawałek internetu na zawsze. Milion pikseli, jeden dolar za piksel.',
+  title: 'Pixel Wall — Milion pixeli, jeden internet',
+  description: 'Kup kawałek internetu na zawsze. Milion pixeli, jeden dolar za pixel.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

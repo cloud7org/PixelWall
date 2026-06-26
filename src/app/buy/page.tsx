@@ -19,7 +19,7 @@ export default function BuyPage() {
               marginBottom: 12,
             }}
           >
-            Zakup pikseli
+            Zakup pixeli
           </span>
           <h1
             style={{

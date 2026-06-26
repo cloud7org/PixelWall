@@ -33,7 +33,7 @@ export default function PriceCalculator() {
             color: '#F5F0E6',
           }}
         >
-          Ile kosztują Twoje piksele?
+          Ile kosztują Twoje pixele?
         </h2>
       </div>
 
@@ -87,7 +87,7 @@ export default function PriceCalculator() {
           >
             <div>
               <div style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#B7B2A4', marginBottom: 4 }}>
-                {w} × {h} pikseli
+                {w} × {h} pixeli
               </div>
               <div style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontSize: 13, color: '#B7B2A4' }}>
                 Całkowita cena

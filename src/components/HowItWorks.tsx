@@ -2,13 +2,13 @@ const steps = [
   {
     num: '01',
     title: 'Wybierz obszar',
-    desc: 'Przeciągnij na siatce prostokąt o wymiarach minimum 10×10 pikseli. Cena liczy się sama, w czasie rzeczywistym.',
+    desc: 'Przeciągnij na siatce prostokąt o wymiarach minimum 10×10 pixeli. Cena liczy się sama, w czasie rzeczywistym.',
     color: '#FF4D2E',
   },
   {
     num: '02',
     title: 'Dodaj grafikę i link',
-    desc: 'Wstaw obrazek dopasowany do rozmiaru bloku oraz adres, do którego mają prowadzić Twoje piksele.',
+    desc: 'Wstaw obrazek dopasowany do rozmiaru bloku oraz adres, do którego mają prowadzić Twoje pixele.',
     color: '#2EE6A6',
   },
   {

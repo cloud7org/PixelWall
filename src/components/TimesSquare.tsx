@@ -44,7 +44,7 @@ export default function TimesSquare() {
               marginBottom: 24,
             }}
           >
-            Kupujesz piksel teraz.
+            Kupujesz pixel teraz.
             <br />
             <span style={{ color: '#FFD23F' }}>Po wysprzedaniu wszystkich</span>
             <br />

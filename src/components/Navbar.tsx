@@ -73,7 +73,7 @@ export default function Navbar() {
           fontFamily: 'var(--font-space-grotesk), sans-serif',
         }}
       >
-        Kup piksele
+        Kup pixele
       </Link>
     </nav>
   )
