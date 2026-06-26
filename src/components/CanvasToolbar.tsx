@@ -25,13 +25,21 @@ export default function CanvasToolbar({ hintText, zoomPct, onZoomChange, onFulls
         userSelect: 'none',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <i className="ti ti-crosshair" aria-hidden="true" />
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+          <circle cx="6" cy="6" r="4" /><line x1="6" y1="0" x2="6" y2="2" /><line x1="6" y1="10" x2="6" y2="12" /><line x1="0" y1="6" x2="2" y2="6" /><line x1="10" y1="6" x2="12" y2="6" />
+        </svg>
         <span>{hintText}</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <i className="ti ti-search" aria-hidden="true" />
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#B0AA9A', fontSize: 11 }}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M6 1v10M1 6h10" /><path d="M4 3l2-2 2 2M4 9l2 2 2-2" />
+        </svg>
+        <span style={{ fontWeight: 600 }}>Scroll lub rozsuń palce, aby przybliżyć / oddalić</span>
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
         <div style={{ position: 'relative', width: 90, height: 3, background: '#E3DFD3' }}>
           <input
             type="range"

@@ -48,11 +48,11 @@ export default function TimesSquare() {
             <br />
             <span style={{ color: '#FFD23F' }}>Po wysprzedaniu wszystkich</span>
             <br />
-            — dostajesz sekundę na Times Square.
+            — dostajesz reklamę na Times Square.
           </h2>
           <p style={{ fontSize: 16, color: '#B7B2A4', lineHeight: 1.7, maxWidth: 440 }}>
             Każdy właściciel bloku zobaczy swoje logo na gigantycznym ekranie w sercu Manhattanu, w Nowym Jorku.
-            Jedna sekunda dla każdego piksela — animacja przejdzie przez całą ścianę.
+            Animacja przejdzie przez całą ścianę — nawet małe obrazy będą widoczne!
           </p>
         </div>
 

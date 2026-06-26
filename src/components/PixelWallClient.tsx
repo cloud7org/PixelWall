@@ -9,7 +9,7 @@ import type { PixelBlock } from '@/types'
 
 export default function PixelWallClient() {
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
-  const [hintText, setHintText] = useState('Najedź na siatkę, aby zobaczyć podgląd')
+  const [hintText, setHintText] = useState('Najedź lub kliknij blok, aby zobaczyć szczegóły')
   const [zoomPct, setZoomPct] = useState(50)
   const [externalScale, setExternalScale] = useState<number | undefined>(undefined)
 
