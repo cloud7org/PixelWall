@@ -241,7 +241,7 @@ export default function BuyPageContent() {
             {[
               { label: 'Pozycja', val: `(${sel.x}, ${sel.y})` },
               { label: 'Rozmiar', val: `${sel.w}×${sel.h}` },
-              { label: 'Cena', val: `$${price.toLocaleString('en-US')}` },
+              { label: 'Cena', val: `${price.toLocaleString('pl-PL')} zł` },
             ].map(({ label, val }) => (
               <div key={label} style={{ flex: 1, background: '#14151B', border: '1px solid #1F212B', borderRadius: 8, padding: '10px 14px' }}>
                 <div style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#5A5C66', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
@@ -335,7 +335,7 @@ export default function BuyPageContent() {
               transition: 'background 0.2s',
             }}
           >
-            {uploading ? 'Wgrywam…' : `Kup ${sel.w}×${sel.h} px za $${price.toLocaleString('en-US')}`}
+            {uploading ? 'Wgrywam…' : `Kup ${sel.w}×${sel.h} px za ${price.toLocaleString('pl-PL')} zł`}
           </button>
         </div>
       </div>

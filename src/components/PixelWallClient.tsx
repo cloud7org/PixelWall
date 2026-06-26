@@ -19,7 +19,7 @@ export default function PixelWallClient() {
   const handleHover = useCallback((block: PixelBlock | null) => {
     setHintText(
       block
-        ? `${block.owner_name ?? 'Anonimowy'} · ${block.width}×${block.height} px · $${(block.width * block.height).toLocaleString('pl-PL')}`
+        ? `${block.owner_name ?? 'Anonimowy'} · ${block.width}×${block.height} px · ${(block.width * block.height).toLocaleString('pl-PL')} zł`
         : 'Najedź na siatkę, aby zobaczyć podgląd'
     )
   }, [])
@@ -126,7 +126,7 @@ export default function PixelWallClient() {
         <div style={{ width: 1, height: 36, background: '#2A2C36' }} />
 
         <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#5A5C66' }}>
-          1000 × 1000 · $1 / px
+          1 600 × 625 · 1 zł / px
         </span>
       </div>
     </div>

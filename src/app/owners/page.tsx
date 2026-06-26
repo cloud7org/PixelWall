@@ -158,7 +158,7 @@ export default function OwnersPage() {
                         fontWeight: 600,
                       }}
                     >
-                      ${(block.width * block.height).toLocaleString('en-US')}
+                      {(block.width * block.height).toLocaleString('pl-PL')} zł
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <a
