@@ -1,7 +1,6 @@
 import Navbar from '@/components/Navbar'
 import HowItWorks from '@/components/HowItWorks'
 import TimesSquare from '@/components/TimesSquare'
-import PriceCalculator from '@/components/PriceCalculator'
 import Link from 'next/link'
 
 export default function HowPage() {
@@ -10,7 +9,6 @@ export default function HowPage() {
       <Navbar />
       <HowItWorks />
       <TimesSquare />
-      <PriceCalculator />
       <footer
         style={{
           borderTop: '1px solid #1F212B',

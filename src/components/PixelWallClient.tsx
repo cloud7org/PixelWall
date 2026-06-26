@@ -58,8 +58,20 @@ export default function PixelWallClient() {
           }}
         >
           Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze
-          <span style={{ color: '#B7B2A4', fontWeight: 400, fontSize: '0.7em', marginLeft: 12 }}>
-            — Twoje logo na Times Square w Nowym Jorku
+          <span style={{ display: 'inline-block', position: 'relative', marginLeft: 12, fontSize: '0.7em', verticalAlign: 'middle' }}>
+            <span
+              style={{
+                fontWeight: 600,
+                background: 'linear-gradient(90deg, #b8860b 0%, #FFD23F 40%, #ffe88a 60%, #FFD23F 80%, #b8860b 100%)',
+                backgroundSize: '200% auto',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                animation: 'goldShimmer 6s linear infinite',
+              }}
+            >
+              — Twoje logo na Times Square w Nowym Jorku
+            </span>
           </span>
         </h1>
       </div>
