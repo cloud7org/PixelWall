@@ -44,6 +44,7 @@ export default function PixelWallClient() {
           background: '#0B0C10',
           borderBottom: '1px solid #1F212B',
           flexShrink: 0,
+          textAlign: 'center',
         }}
       >
         <h1

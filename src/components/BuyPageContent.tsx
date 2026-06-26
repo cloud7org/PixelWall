@@ -5,15 +5,17 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 
-const GRID = 1000
-const PREVIEW = 500
+const GRID_W = 1600
+const GRID_H = 625
+const PREVIEW_W = 640
+const PREVIEW_H = 250
 
 export default function BuyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const initW = Math.max(10, Math.min(500, Number(searchParams.get('w') ?? 100)))
-  const initH = Math.max(10, Math.min(500, Number(searchParams.get('h') ?? 80)))
+  const initW = Math.max(10, Math.min(GRID_W - 10, Number(searchParams.get('w') ?? 100)))
+  const initH = Math.max(10, Math.min(GRID_H - 10, Number(searchParams.get('h') ?? 80)))
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const blocksRef = useRef<PixelBlock[]>([])
@@ -32,8 +34,10 @@ export default function BuyPageContent() {
 
   const price = sel.w * sel.h
 
-  const toGrid = (px: number) => Math.round((px / PREVIEW) * GRID)
-  const toPreview = (g: number) => (g / GRID) * PREVIEW
+  const toGridX = (px: number) => Math.round((px / PREVIEW_W) * GRID_W)
+  const toGridY = (px: number) => Math.round((px / PREVIEW_H) * GRID_H)
+  const toPreviewX = (g: number) => (g / GRID_W) * PREVIEW_W
+  const toPreviewY = (g: number) => (g / GRID_H) * PREVIEW_H
 
   const drawPreview = useCallback(() => {
     const canvas = canvasRef.current
@@ -41,31 +45,31 @@ export default function BuyPageContent() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    ctx.clearRect(0, 0, PREVIEW, PREVIEW)
+    ctx.clearRect(0, 0, PREVIEW_W, PREVIEW_H)
     ctx.fillStyle = '#FAF8F2'
-    ctx.fillRect(0, 0, PREVIEW, PREVIEW)
+    ctx.fillRect(0, 0, PREVIEW_W, PREVIEW_H)
 
     // Grid lines
     ctx.strokeStyle = 'rgba(0,0,0,0.06)'
     ctx.lineWidth = 0.5
-    for (let x = 0; x <= PREVIEW; x += PREVIEW / 50) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, PREVIEW); ctx.stroke()
+    for (let x = 0; x <= PREVIEW_W; x += PREVIEW_W / 80) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, PREVIEW_H); ctx.stroke()
     }
-    for (let y = 0; y <= PREVIEW; y += PREVIEW / 50) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(PREVIEW, y); ctx.stroke()
+    for (let y = 0; y <= PREVIEW_H; y += PREVIEW_H / 31) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(PREVIEW_W, y); ctx.stroke()
     }
 
     // Existing blocks
     blocksRef.current.forEach(b => {
       ctx.fillStyle = 'rgba(255,77,46,0.35)'
-      ctx.fillRect(toPreview(b.x), toPreview(b.y), toPreview(b.width), toPreview(b.height))
+      ctx.fillRect(toPreviewX(b.x), toPreviewY(b.y), toPreviewX(b.width), toPreviewY(b.height))
     })
 
     // Current selection
-    const sx = toPreview(sel.x)
-    const sy = toPreview(sel.y)
-    const sw = toPreview(sel.w)
-    const sh = toPreview(sel.h)
+    const sx = toPreviewX(sel.x)
+    const sy = toPreviewY(sel.y)
+    const sw = toPreviewX(sel.w)
+    const sh = toPreviewY(sel.h)
     ctx.fillStyle = 'rgba(46,230,166,0.25)'
     ctx.fillRect(sx, sy, sw, sh)
     ctx.strokeStyle = '#2EE6A6'
@@ -82,7 +86,7 @@ export default function BuyPageContent() {
     ctx.fillStyle = '#0B0C10'
     ctx.font = 'bold 11px monospace'
     ctx.fillText(`${sel.w}×${sel.h}`, sx + 4, sy + 14)
-  }, [sel])
+  }, [sel, toPreviewX, toPreviewY])
 
   useEffect(() => { drawPreview() }, [drawPreview])
 
@@ -100,11 +104,11 @@ export default function BuyPageContent() {
 
   const getCanvasPos = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = canvasRef.current!.getBoundingClientRect()
-    const scaleX = PREVIEW / rect.width
-    const scaleY = PREVIEW / rect.height
+    const scaleX = PREVIEW_W / rect.width
+    const scaleY = PREVIEW_H / rect.height
     return {
-      x: Math.max(0, Math.min(GRID - 10, toGrid((e.clientX - rect.left) * scaleX))),
-      y: Math.max(0, Math.min(GRID - 10, toGrid((e.clientY - rect.top) * scaleY))),
+      x: Math.max(0, Math.min(GRID_W - 10, toGridX((e.clientX - rect.left) * scaleX))),
+      y: Math.max(0, Math.min(GRID_H - 10, toGridY((e.clientY - rect.top) * scaleY))),
     }
   }
 
@@ -122,7 +126,7 @@ export default function BuyPageContent() {
     const newY = Math.min(dragStart.current.y, y)
     const newW = Math.max(10, Math.abs(x - dragStart.current.x))
     const newH = Math.max(10, Math.abs(y - dragStart.current.y))
-    setSel({ x: newX, y: newY, w: Math.min(newW, GRID - newX), h: Math.min(newH, GRID - newY) })
+    setSel({ x: newX, y: newY, w: Math.min(newW, GRID_W - newX), h: Math.min(newH, GRID_H - newY) })
   }
 
   const onMouseUp = () => { isDragging.current = false }
@@ -219,8 +223,8 @@ export default function BuyPageContent() {
           <div style={{ position: 'relative', border: isOverlap ? '2px solid #FF4D2E' : '1px solid #2A2C36', borderRadius: 8, overflow: 'hidden' }}>
             <canvas
               ref={canvasRef}
-              width={PREVIEW}
-              height={PREVIEW}
+              width={PREVIEW_W}
+              height={PREVIEW_H}
               style={{ display: 'block', width: '100%', cursor: 'crosshair' }}
               onMouseDown={onMouseDown}
               onMouseMove={onMouseMove}

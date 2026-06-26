@@ -12,7 +12,8 @@ interface Props {
   externalScale?: number
 }
 
-const GRID_SIZE = 1000
+const GRID_W = 1600
+const GRID_H = 625
 const GRID_STEP = 20
 const MIN_SCALE = 0.2
 const MAX_SCALE = 8
@@ -27,6 +28,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   const lastPtrRef = useRef({ x: 0, y: 0 })
   const rafRef = useRef<number | null>(null)
   const dprRef = useRef(1)
+  const initializedRef = useRef(false)
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -52,8 +54,8 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     // Grid lines (only visible range)
     const startX = Math.max(0, Math.floor(-offsetX / scale / GRID_STEP) * GRID_STEP)
     const startY = Math.max(0, Math.floor(-offsetY / scale / GRID_STEP) * GRID_STEP)
-    const endX = Math.min(GRID_SIZE, startX + Math.ceil(cssW / scale / GRID_STEP + 2) * GRID_STEP)
-    const endY = Math.min(GRID_SIZE, startY + Math.ceil(cssH / scale / GRID_STEP + 2) * GRID_STEP)
+    const endX = Math.min(GRID_W, startX + Math.ceil(cssW / scale / GRID_STEP + 2) * GRID_STEP)
+    const endY = Math.min(GRID_H, startY + Math.ceil(cssH / scale / GRID_STEP + 2) * GRID_STEP)
 
     ctx.strokeStyle = 'rgba(0,0,0,0.06)'
     ctx.lineWidth = 1 / scale
@@ -69,7 +71,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     // Border
     ctx.strokeStyle = 'rgba(0,0,0,0.15)'
     ctx.lineWidth = 2 / scale
-    ctx.strokeRect(0, 0, GRID_SIZE, GRID_SIZE)
+    ctx.strokeRect(0, 0, GRID_W, GRID_H)
 
     // Blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#1A1C24']
@@ -108,6 +110,18 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     dprRef.current = dpr
     canvas.width = canvas.offsetWidth * dpr
     canvas.height = canvas.offsetHeight * dpr
+
+    if (!initializedRef.current) {
+      initializedRef.current = true
+      const cssW = canvas.offsetWidth
+      const cssH = canvas.offsetHeight
+      // Cover: scale so grid fills full canvas width and height (may clip on one axis)
+      const fitScale = Math.max(cssW / GRID_W, cssH / GRID_H)
+      viewRef.current.scale = fitScale
+      viewRef.current.offsetX = 0
+      viewRef.current.offsetY = 0
+    }
+
     scheduleRedraw()
   }, [scheduleRedraw])
 
@@ -117,6 +131,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   }
 
   const hitTest = (lx: number, ly: number): PixelBlock | null => {
+    if (lx < 0 || lx >= GRID_W || ly < 0 || ly >= GRID_H) return null
     for (let i = blocksRef.current.length - 1; i >= 0; i--) {
       const b = blocksRef.current[i]
       if (lx >= b.x && lx < b.x + b.width && ly >= b.y && ly < b.y + b.height) return b
