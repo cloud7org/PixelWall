@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Colors */
+  --color-bg: #0B0C10;
+  --color-bg-raised: #14151B;
+  --color-bg-card: #1A1C24;
+  --color-cream: #F5F0E6;
+  --color-cream-dim: #B7B2A4;
+  --color-vermilion: #FF4D2E;
+  --color-mint: #2EE6A6;
+  --color-yellow: #FFD23F;
+  --color-line: #2A2C36;
+  --color-line-soft: #1F212B;
+  --color-grid-bg: #FAF8F2;
+  --color-grid-line: #E3DFD3;
+
+  /* Fonts */
+  --font-display: var(--font-space-grotesk), sans-serif;
+  --font-sans: var(--font-inter), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: #0B0C10;
+  color: #F5F0E6;
+  font-family: var(--font-inter), Inter, sans-serif;
+  overflow-x: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
