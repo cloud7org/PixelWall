@@ -4,38 +4,12 @@ import BuyPageContent from '@/components/BuyPageContent'
 
 export default function BuyPage() {
   return (
-    <div style={{ background: '#0B0C10', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', background: '#0B0C10' }}>
       <Navbar />
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '56px 48px' }}>
-        <div style={{ marginBottom: 40 }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-jetbrains-mono), monospace',
-              fontSize: 12,
-              letterSpacing: '0.1em',
-              color: '#FF4D2E',
-              textTransform: 'uppercase',
-              display: 'block',
-              marginBottom: 12,
-            }}
-          >
-            Zakup pixeli
-          </span>
-          <h1
-            style={{
-              fontFamily: 'var(--font-space-grotesk), sans-serif',
-              fontWeight: 700,
-              fontSize: 'clamp(24px, 3vw, 36px)',
-              letterSpacing: '-0.02em',
-              color: '#F5F0E6',
-            }}
-          >
-            Zaznacz swój obszar
-          </h1>
-        </div>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <Suspense
           fallback={
-            <div style={{ color: '#B7B2A4', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
+            <div style={{ height: '100%', background: '#0B0C10', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#B7B2A4', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
               Ładowanie…
             </div>
           }
