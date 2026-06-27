@@ -11,6 +11,7 @@ const GRID_STEP = 20
 const MIN_SCALE = 0.08
 const MAX_SCALE = 6
 
+
 const scaleToPct = (s: number) =>
   Math.round(Math.log(s / MIN_SCALE) / Math.log(MAX_SCALE / MIN_SCALE) * 100)
 const pctToScale = (p: number) =>
