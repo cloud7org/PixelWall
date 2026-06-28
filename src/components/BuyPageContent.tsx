@@ -99,7 +99,7 @@ export default function BuyPageContent() {
   const [snapEnabled, setSnapEnabled] = useState(true)
   const [zoomPct, setZoomPct]       = useState(30)
   const [ownerName, setOwnerName]   = useState('')
-  const [linkUrl, setLinkUrl]       = useState('https://')
+  const [linkUrl, setLinkUrl]       = useState('')
   const [altText, setAltText]       = useState('')
   const [imageFile, setImageFile]   = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
@@ -767,7 +767,7 @@ export default function BuyPageContent() {
             <div style={{ width: 38, height: 38, background: '#1A1C24', border: '1px solid #2A2C36', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {imagePreview
                 ? <img src={imagePreview} alt="" style={{ width: 38, height: 38, objectFit: 'cover' }} />
-                : <i className="ti ti-photo" style={{ color: '#5A5C66', fontSize: 18 }} />}
+                : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A5C66" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>}
             </div>
             <div style={{ fontSize: 13, color: '#B7B2A4' }}>
               <b style={{ color: '#F5F0E6', fontWeight: 500 }}>{imageFile ? imageFile.name : 'Kliknij, aby wgrać'}</b>

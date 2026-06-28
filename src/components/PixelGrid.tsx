@@ -269,7 +269,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
         const rect = canvas.getBoundingClientRect()
         const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
         const hit = hitTest(lx, ly)
-        if (hit) window.open(hit.link_url, '_blank', 'noopener')
+        if (hit?.link_url) window.open(hit.link_url, '_blank', 'noopener')
       }
     }
 
