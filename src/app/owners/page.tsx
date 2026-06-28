@@ -161,15 +161,17 @@ export default function OwnersPage() {
                       {(block.width * block.height).toLocaleString('pl-PL')} zł
                     </td>
                     <td style={{ padding: '12px 16px' }}>
-                      <a
-                        href={block.link_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#FF4D2E', textDecoration: 'none', fontSize: 13 }}
-                      >
-                        {block.link_url.replace(/^https?:\/\//, '').slice(0, 28)}
-                        {block.link_url.length > 35 ? '…' : ''}
-                      </a>
+                      {block.link_url ? (
+                        <a
+                          href={block.link_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#FF4D2E', textDecoration: 'none', fontSize: 13 }}
+                        >
+                          {block.link_url.replace(/^https?:\/\//, '').slice(0, 28)}
+                          {block.link_url.length > 35 ? '…' : ''}
+                        </a>
+                      ) : <span style={{ color: '#54566a', fontSize: 13 }}>—</span>}
                     </td>
                     <td
                       style={{

@@ -60,8 +60,8 @@ export default function BuyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const initW = Math.max(10, Math.min(GRID_W - 10, Number(searchParams.get('w') ?? 100)))
-  const initH = Math.max(10, Math.min(GRID_H - 10, Number(searchParams.get('h') ?? 80)))
+  const initW = Math.max(10, Math.min(GRID_W - 10, Number(searchParams.get('w') ?? 10)))
+  const initH = Math.max(10, Math.min(GRID_H - 10, Number(searchParams.get('h') ?? 10)))
 
   // Canvas / view refs
   const canvasRef      = useRef<HTMLCanvasElement>(null)
@@ -549,7 +549,6 @@ export default function BuyPageContent() {
     e.preventDefault()
     setError(null)
     if (!imageFile)                    { setError('Wgraj obrazek.'); return }
-    if (!linkUrl.startsWith('http'))   { setError('Link musi zaczynać się od http:// lub https://'); return }
     if (hasOverlap(sel.x, sel.y, sel.w, sel.h)) { setError('Ten obszar nakłada się na istniejący blok. Wybierz inne miejsce.'); return }
 
     setUploading(true)
@@ -571,7 +570,7 @@ export default function BuyPageContent() {
       const { data: urlData } = supabase.storage.from('pixel-images').getPublicUrl(`${id}.png`)
       const { error: insErr } = await supabase.from('pixel_blocks').insert({
         id, x: sel.x, y: sel.y, width: sel.w, height: sel.h,
-        image_url: urlData.publicUrl, link_url: linkUrl,
+        image_url: urlData.publicUrl, link_url: linkUrl || null,
         owner_name: ownerName || null, alt_text: altText || null,
       })
       if (insErr) throw new Error(insErr.message)
@@ -713,10 +712,6 @@ export default function BuyPageContent() {
               <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 16, color: '#F5F0E6' }}>{val}</span>
             </div>
           ))}
-          <div style={{ gridColumn: '1 / -1', background: 'rgba(255,77,46,0.08)', border: '1px solid rgba(255,77,46,0.3)', padding: '12px 14px' }}>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#B7B2A4', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>CENA ZA OBSZAR</span>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 24, color: '#FF4D2E' }}>{price.toLocaleString('pl-PL')} zł</span>
-          </div>
         </div>
 
         {/* Exact size inputs */}
@@ -748,7 +743,7 @@ export default function BuyPageContent() {
         {/* Text fields */}
         {([
           { id: 'owner', label: 'Nazwa właściciela', val: ownerName, set: setOwnerName, placeholder: 'np. Studio Orbit',  req: false },
-          { id: 'link',  label: 'Link URL',          val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: true  },
+          { id: 'link',  label: 'Link URL',          val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false },
           { id: 'alt',   label: 'Opis obrazka (alt)',val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false },
         ] as const).map(({ id, label, val, set, placeholder, req }) => (
           <div key={id} style={{ marginBottom: 16 }}>
