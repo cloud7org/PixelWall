@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { supabase } from '@/lib/supabase'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 import type { PixelBlock } from '@/types'
 
 export default function OwnersPage() {
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
   const [loading, setLoading] = useState(true)
+  const { isMobile } = useBreakpoint()
 
   useEffect(() => {
     supabase
@@ -25,7 +27,7 @@ export default function OwnersPage() {
     <div style={{ background: '#0B0C10', minHeight: '100vh' }}>
       <Navbar />
 
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '56px 48px' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: isMobile ? '24px 16px' : '56px 48px' }}>
         <div style={{ marginBottom: 40 }}>
           <span
             style={{
@@ -83,16 +85,18 @@ export default function OwnersPage() {
               border: '1px solid #1F212B',
               borderRadius: 12,
               overflow: 'hidden',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
             }}
           >
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isMobile ? 600 : 'unset' }}>
               <thead>
                 <tr style={{ background: '#14151B', borderBottom: '1px solid #1F212B' }}>
                   {['Podgląd', 'Właściciel', 'Rozmiar', 'Piksele', 'Cena', 'Link', 'Data'].map(h => (
                     <th
                       key={h}
                       style={{
-                        padding: '12px 16px',
+                        padding: isMobile ? '10px 12px' : '12px 16px',
                         textAlign: 'left',
                         fontFamily: 'var(--font-jetbrains-mono), monospace',
                         fontSize: 11,
@@ -100,6 +104,7 @@ export default function OwnersPage() {
                         color: '#B7B2A4',
                         textTransform: 'uppercase',
                         fontWeight: 500,
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {h}
@@ -116,7 +121,7 @@ export default function OwnersPage() {
                       background: i % 2 === 0 ? '#0B0C10' : '#0E0F14',
                     }}
                   >
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: isMobile ? '10px 12px' : '12px 16px' }}>
                       <img
                         src={block.image_url}
                         alt={block.alt_text ?? ''}
@@ -125,48 +130,51 @@ export default function OwnersPage() {
                         style={{ objectFit: 'cover', border: '1px solid #2A2C36', borderRadius: 4 }}
                       />
                     </td>
-                    <td style={{ padding: '12px 16px', color: '#F5F0E6', fontSize: 14 }}>
+                    <td style={{ padding: isMobile ? '10px 12px' : '12px 16px', color: '#F5F0E6', fontSize: 14, whiteSpace: 'nowrap' }}>
                       {block.owner_name ?? 'Anonimowy'}
                     </td>
                     <td
                       style={{
-                        padding: '12px 16px',
+                        padding: isMobile ? '10px 12px' : '12px 16px',
                         fontFamily: 'var(--font-jetbrains-mono), monospace',
                         fontSize: 12,
                         color: '#B7B2A4',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {block.width}×{block.height}
                     </td>
                     <td
                       style={{
-                        padding: '12px 16px',
+                        padding: isMobile ? '10px 12px' : '12px 16px',
                         fontFamily: 'var(--font-jetbrains-mono), monospace',
                         fontSize: 13,
                         color: '#2EE6A6',
                         fontWeight: 600,
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {(block.width * block.height).toLocaleString('pl-PL')}
                     </td>
                     <td
                       style={{
-                        padding: '12px 16px',
+                        padding: isMobile ? '10px 12px' : '12px 16px',
                         fontFamily: 'var(--font-jetbrains-mono), monospace',
                         fontSize: 13,
                         color: '#FFD23F',
                         fontWeight: 600,
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {(block.width * block.height).toLocaleString('pl-PL')} zł
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: isMobile ? '10px 12px' : '12px 16px', maxWidth: isMobile ? 100 : 'unset', overflow: 'hidden' }}>
                       {block.link_url ? (
                         <a
                           href={block.link_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ color: '#FF4D2E', textDecoration: 'none', fontSize: 13 }}
+                          style={{ color: '#FF4D2E', textDecoration: 'none', fontSize: 13, whiteSpace: 'nowrap' }}
                         >
                           {block.link_url.replace(/^https?:\/\//, '').slice(0, 28)}
                           {block.link_url.length > 35 ? '…' : ''}
@@ -175,10 +183,11 @@ export default function OwnersPage() {
                     </td>
                     <td
                       style={{
-                        padding: '12px 16px',
+                        padding: isMobile ? '10px 12px' : '12px 16px',
                         fontFamily: 'var(--font-jetbrains-mono), monospace',
                         fontSize: 11,
                         color: '#5A5C66',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {new Date(block.created_at).toLocaleDateString('pl-PL')}

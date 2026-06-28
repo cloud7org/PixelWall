@@ -2,15 +2,17 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 export default function PriceCalculator() {
   const [w, setW] = useState(100)
   const [h, setH] = useState(80)
   const price = w * h
+  const { isMobile } = useBreakpoint()
 
   return (
-    <section style={{ padding: '80px 48px', maxWidth: 1080, margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: 48 }}>
+    <section style={{ padding: isMobile ? '40px 20px' : '80px 48px', maxWidth: 1080, margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: isMobile ? 32 : 48 }}>
         <span
           style={{
             fontFamily: 'var(--font-jetbrains-mono), monospace',
@@ -40,8 +42,8 @@ export default function PriceCalculator() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 48,
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: isMobile ? 24 : 48,
           alignItems: 'start',
         }}
       >
@@ -140,7 +142,6 @@ export default function PriceCalculator() {
               overflow: 'hidden',
             }}
           >
-            {/* Grid lines */}
             <div
               style={{
                 position: 'absolute',
@@ -149,7 +150,6 @@ export default function PriceCalculator() {
                 backgroundSize: '10% 10%',
               }}
             />
-            {/* Selection */}
             <div
               style={{
                 position: 'absolute',

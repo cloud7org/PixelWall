@@ -1,11 +1,17 @@
+'use client'
+
+import { useBreakpoint } from '@/hooks/useBreakpoint'
+
 export default function TimesSquare() {
+  const { isMobile } = useBreakpoint()
+
   return (
     <section
       style={{
         background: '#14151B',
         borderTop: '1px solid #1F212B',
         borderBottom: '1px solid #1F212B',
-        padding: '80px 48px',
+        padding: isMobile ? '40px 20px' : '80px 48px',
       }}
     >
       <div
@@ -13,8 +19,8 @@ export default function TimesSquare() {
           maxWidth: 1080,
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 64,
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: isMobile ? 32 : 64,
           alignItems: 'center',
         }}
       >
@@ -60,8 +66,8 @@ export default function TimesSquare() {
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div
             style={{
-              width: 280,
-              height: 200,
+              width: isMobile ? 240 : 280,
+              height: isMobile ? 170 : 200,
               background: '#0B0C10',
               border: '3px solid #2A2C36',
               borderRadius: 8,
@@ -70,7 +76,6 @@ export default function TimesSquare() {
               boxShadow: '0 0 40px rgba(255,210,63,0.15)',
             }}
           >
-            {/* Grid of pixel dots */}
             <div
               style={{
                 position: 'absolute',
@@ -100,9 +105,7 @@ export default function TimesSquare() {
             <div
               style={{
                 position: 'absolute',
-                bottom: 6,
-                left: 0,
-                right: 0,
+                bottom: 6, left: 0, right: 0,
                 textAlign: 'center',
                 fontFamily: 'var(--font-jetbrains-mono), monospace',
                 fontSize: 9,
