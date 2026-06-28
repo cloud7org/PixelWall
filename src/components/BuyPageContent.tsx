@@ -113,6 +113,9 @@ export default function BuyPageContent() {
 
   const price = sel.w * sel.h
 
+  // Reset canvas view when breakpoint changes (layout change invalidates old offsets)
+  useEffect(() => { initializedRef.current = false }, [isMobile])
+
   // Sync refs with state
   useEffect(() => {
     selRef.current = sel
@@ -609,7 +612,7 @@ export default function BuyPageContent() {
   // ─── RENDER ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: isMobile ? 'auto' : 'hidden' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
 
       {/* ── LEFT: canvas workspace ── */}
       <div style={{ flex: isMobile ? 'none' : 1, height: isMobile ? '45vh' : undefined, position: 'relative', background: '#E8E4DC', overflow: 'hidden' }}>
@@ -685,7 +688,9 @@ export default function BuyPageContent() {
         onSubmit={handleSubmit}
         style={{
           width: isMobile ? '100%' : 340,
-          flexShrink: 0,
+          flex: isMobile ? 1 : undefined,
+          minHeight: isMobile ? 0 : undefined,
+          flexShrink: isMobile ? undefined : 0,
           background: '#0B0C10',
           borderLeft: isMobile ? 'none' : '1px solid #1F212B',
           borderTop: isMobile ? '1px solid #1F212B' : 'none',
