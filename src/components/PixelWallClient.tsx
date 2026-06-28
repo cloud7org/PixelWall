@@ -86,6 +86,7 @@ export default function PixelWallClient() {
           onNewBlock={handleNewBlock}
           onZoomChange={handleZoomChange}
           externalScale={externalScale}
+          reinitKey={Number(isMobile)}
         />
       </div>
 

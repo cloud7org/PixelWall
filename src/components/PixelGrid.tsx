@@ -10,6 +10,7 @@ interface Props {
   onNewBlock: (block: PixelBlock) => void
   onZoomChange: (pct: number) => void
   externalScale?: number
+  reinitKey?: number | string
 }
 
 const GRID_W = 1000
@@ -18,7 +19,7 @@ const GRID_STEP = 20
 const MIN_SCALE = 0.2
 const MAX_SCALE = 8
 
-export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomChange, externalScale }: Props) {
+export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomChange, externalScale, reinitKey }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const blocksRef = useRef<PixelBlock[]>([])
   const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map())
@@ -205,13 +206,14 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
 
   // ResizeObserver
   useEffect(() => {
+    initializedRef.current = false
     const canvas = canvasRef.current
     if (!canvas) return
     resize()
     const ro = new ResizeObserver(resize)
     ro.observe(canvas)
     return () => ro.disconnect()
-  }, [resize])
+  }, [resize, reinitKey])
 
   // Mouse/wheel handlers
   useEffect(() => {
