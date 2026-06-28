@@ -113,9 +113,6 @@ export default function BuyPageContent() {
 
   const price = sel.w * sel.h
 
-  // Reset canvas view when breakpoint changes (layout change invalidates old offsets)
-  useEffect(() => { initializedRef.current = false }, [isMobile])
-
   // Sync refs with state
   useEffect(() => {
     selRef.current = sel
@@ -307,6 +304,7 @@ export default function BuyPageContent() {
   // ─── RESIZE OBSERVER ───────────────────────────────────────────────────────
 
   useEffect(() => {
+    initializedRef.current = false
     const canvas = canvasRef.current
     if (!canvas) return
     const resize = () => {
@@ -332,7 +330,7 @@ export default function BuyPageContent() {
     const ro = new ResizeObserver(resize)
     ro.observe(canvas)
     return () => ro.disconnect()
-  }, [scheduleRedraw])
+  }, [scheduleRedraw, isMobile])
 
   // ─── POINTER + WHEEL ───────────────────────────────────────────────────────
 
