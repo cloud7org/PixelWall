@@ -121,7 +121,7 @@ export default function BuyPageContent() {
   useEffect(() => { snapEnabledRef.current = snapEnabled }, [snapEnabled])
 
   const snap = useCallback((v: number) =>
-    snapEnabledRef.current ? Math.round(v / GRID_STEP) * GRID_STEP : v, [])
+    snapEnabledRef.current ? Math.round(v / (GRID_STEP / 2)) * (GRID_STEP / 2) : v, [])
 
   // ─── DRAW ──────────────────────────────────────────────────────────────────
 
