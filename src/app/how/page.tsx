@@ -6,8 +6,8 @@ export default function HowPage() {
   return (
     <div style={{ background: '#0B0C10', minHeight: '100vh' }}>
       <Navbar />
-      <HowItWorks />
       <TimesSquare />
+      <HowItWorks />
       <footer
         style={{
           borderTop: '1px solid #1F212B',
