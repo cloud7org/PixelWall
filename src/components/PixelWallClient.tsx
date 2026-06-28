@@ -6,8 +6,10 @@ import PixelGrid from './PixelGrid'
 import CanvasToolbar from './CanvasToolbar'
 import PixelCounter from './PixelCounter'
 import type { PixelBlock } from '@/types'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 export default function PixelWallClient() {
+  const { isMobile } = useBreakpoint()
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
   const [hintText, setHintText] = useState('Najedź lub kliknij blok, aby zobaczyć szczegóły')
   const [zoomPct, setZoomPct] = useState(50)
@@ -40,7 +42,7 @@ export default function PixelWallClient() {
       {/* Headline */}
       <div
         style={{
-          padding: '14px 32px',
+          padding: isMobile ? '10px 16px' : '14px 32px',
           background: '#0B0C10',
           borderBottom: '1px solid #1F212B',
           flexShrink: 0,
@@ -100,8 +102,8 @@ export default function PixelWallClient() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 40,
-          padding: '10px 32px',
+          gap: isMobile ? 16 : 40,
+          padding: isMobile ? '8px 12px' : '10px 32px',
           background: '#0B0C10',
           borderTop: '1px solid #1F212B',
           flexShrink: 0,
@@ -109,7 +111,7 @@ export default function PixelWallClient() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, letterSpacing: '0.1em', color: '#B7B2A4', textTransform: 'uppercase' }}>
-            Sprzedane pixele
+            Sprzedane
           </span>
           <PixelCounter value={soldPixels} color="red" />
         </div>
@@ -118,16 +120,19 @@ export default function PixelWallClient() {
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, letterSpacing: '0.1em', color: '#B7B2A4', textTransform: 'uppercase' }}>
-            Wolne pixele
+            Wolne
           </span>
           <PixelCounter value={freePixels} color="green" />
         </div>
 
-        <div style={{ width: 1, height: 36, background: '#2A2C36' }} />
-
-        <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#5A5C66' }}>
-          1 000 × 1 000 · 1 zł / px
-        </span>
+        {!isMobile && (
+          <>
+            <div style={{ width: 1, height: 36, background: '#2A2C36' }} />
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#5A5C66' }}>
+              1 000 × 1 000 · 1 zł / px
+            </span>
+          </>
+        )}
       </div>
     </div>
   )

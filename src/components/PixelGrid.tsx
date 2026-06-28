@@ -111,7 +111,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     canvas.width = canvas.offsetWidth * dpr
     canvas.height = canvas.offsetHeight * dpr
 
-    if (!initializedRef.current) {
+    if (!initializedRef.current && canvas.offsetWidth > 0 && canvas.offsetHeight > 0) {
       initializedRef.current = true
       const cssW = canvas.offsetWidth
       const cssH = canvas.offsetHeight

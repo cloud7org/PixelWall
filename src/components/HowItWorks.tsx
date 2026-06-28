@@ -1,3 +1,6 @@
+'use client'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
+
 const steps = [
   {
     num: '01',
@@ -20,8 +23,9 @@ const steps = [
 ]
 
 export default function HowItWorks() {
+  const { isMobile } = useBreakpoint()
   return (
-    <section style={{ padding: '80px 48px', maxWidth: 1080, margin: '0 auto' }}>
+    <section style={{ padding: isMobile ? '40px 16px' : '80px 48px', maxWidth: 1080, margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 56 }}>
         <span
           style={{

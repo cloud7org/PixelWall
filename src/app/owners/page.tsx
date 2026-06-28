@@ -5,8 +5,10 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 export default function OwnersPage() {
+  const { isMobile } = useBreakpoint()
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -25,7 +27,7 @@ export default function OwnersPage() {
     <div style={{ background: '#0B0C10', minHeight: '100vh' }}>
       <Navbar />
 
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '56px 48px' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: isMobile ? '32px 16px' : '56px 48px' }}>
         <div style={{ marginBottom: 40 }}>
           <span
             style={{
@@ -85,7 +87,8 @@ export default function OwnersPage() {
               overflow: 'hidden',
             }}
           >
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
               <thead>
                 <tr style={{ background: '#14151B', borderBottom: '1px solid #1F212B' }}>
                   {['Podgląd', 'Właściciel', 'Rozmiar', 'Piksele', 'Cena', 'Link', 'Data'].map(h => (
@@ -187,6 +190,7 @@ export default function OwnersPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

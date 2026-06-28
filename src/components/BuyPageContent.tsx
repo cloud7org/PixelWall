@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 const GRID_W    = 1000
 const GRID_H    = 1000
@@ -59,6 +60,7 @@ function applyResize(handle: Handle, start: Sel, gdx: number, gdy: number, snap:
 export default function BuyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { isMobile } = useBreakpoint()
 
   const initW = Math.max(10, Math.min(GRID_W - 10, Number(searchParams.get('w') ?? 10)))
   const initH = Math.max(10, Math.min(GRID_H - 10, Number(searchParams.get('h') ?? 10)))
@@ -309,7 +311,7 @@ export default function BuyPageContent() {
       dprRef.current = dpr
       canvas.width  = canvas.offsetWidth  * dpr
       canvas.height = canvas.offsetHeight * dpr
-      if (!initializedRef.current && canvas.offsetWidth > 0) {
+      if (!initializedRef.current && canvas.offsetWidth > 0 && canvas.offsetHeight > 0) {
         initializedRef.current = true
         const fit = Math.min(canvas.offsetWidth / GRID_W, canvas.offsetHeight / GRID_H)
         const cx = canvas.offsetWidth
@@ -607,10 +609,10 @@ export default function BuyPageContent() {
   // ─── RENDER ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ height: '100%', display: 'flex', overflow: 'hidden' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: isMobile ? 'auto' : 'hidden' }}>
 
       {/* ── LEFT: canvas workspace ── */}
-      <div style={{ flex: 1, position: 'relative', background: '#E8E4DC', overflow: 'hidden' }}>
+      <div style={{ flex: isMobile ? 'none' : 1, height: isMobile ? '45vh' : undefined, position: 'relative', background: '#E8E4DC', overflow: 'hidden' }}>
         <canvas
           ref={canvasRef}
           style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', cursor: 'crosshair' }}
@@ -657,7 +659,7 @@ export default function BuyPageContent() {
           padding: '10px 18px', borderTop: '1px solid #E3DFD3', background: '#FAF8F2',
           fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 12, color: '#8A8676',
         }}>
-          <span>Przeciągnij uchwyty, aby dopasować rozmiar — lub przewiń, by przybliżyć</span>
+          {!isMobile && <span>Przeciągnij uchwyty, aby dopasować rozmiar — lub przewiń, by przybliżyć</span>}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button onClick={() => zoomBy(0.8)} style={{ width: 22, height: 22, border: '1px solid #E3DFD3', background: 'transparent', color: '#8A8676', cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
             <div style={{ position: 'relative', width: 90, height: 3, background: '#E3DFD3' }}>
@@ -682,9 +684,12 @@ export default function BuyPageContent() {
       <form
         onSubmit={handleSubmit}
         style={{
-          width: 340, flexShrink: 0,
-          background: '#0B0C10', borderLeft: '1px solid #1F212B',
-          overflowY: 'auto', padding: 24,
+          width: isMobile ? '100%' : 340,
+          flexShrink: 0,
+          background: '#0B0C10',
+          borderLeft: isMobile ? 'none' : '1px solid #1F212B',
+          borderTop: isMobile ? '1px solid #1F212B' : 'none',
+          overflowY: 'auto', padding: isMobile ? '20px 16px' : 24,
           display: 'flex', flexDirection: 'column',
         }}
       >
