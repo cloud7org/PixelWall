@@ -126,7 +126,7 @@ export default function PixelWallClient() {
         <div style={{ width: 1, height: 36, background: '#2A2C36' }} />
 
         <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#5A5C66' }}>
-          1 600 × 625 · 1 zł / px
+          1 000 × 1 000 · 1 zł / px
         </span>
       </div>
     </div>

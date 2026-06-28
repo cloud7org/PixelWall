@@ -12,8 +12,8 @@ interface Props {
   externalScale?: number
 }
 
-const GRID_W = 1600
-const GRID_H = 625
+const GRID_W = 1000
+const GRID_H = 1000
 const GRID_STEP = 20
 const MIN_SCALE = 0.2
 const MAX_SCALE = 8
@@ -115,11 +115,10 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       initializedRef.current = true
       const cssW = canvas.offsetWidth
       const cssH = canvas.offsetHeight
-      // Cover: scale so grid fills full canvas width and height (may clip on one axis)
-      const fitScale = Math.max(cssW / GRID_W, cssH / GRID_H)
+      const fitScale = Math.min(cssW / GRID_W, cssH / GRID_H)
       viewRef.current.scale = fitScale
-      viewRef.current.offsetX = 0
-      viewRef.current.offsetY = 0
+      viewRef.current.offsetX = Math.round((cssW - GRID_W * fitScale) / 2)
+      viewRef.current.offsetY = Math.round((cssH - GRID_H * fitScale) / 2)
     }
 
     scheduleRedraw()

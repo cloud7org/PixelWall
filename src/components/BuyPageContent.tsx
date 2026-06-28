@@ -5,8 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 
-const GRID_W    = 1600
-const GRID_H    = 625
+const GRID_W    = 1000
+const GRID_H    = 1000
 const GRID_STEP = 20
 const MIN_SCALE = 0.08
 const MAX_SCALE = 6
