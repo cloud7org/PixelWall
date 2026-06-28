@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Navbar from './Navbar'
 import PixelGrid from './PixelGrid'
 import CanvasToolbar from './CanvasToolbar'
@@ -14,6 +14,22 @@ export default function PixelWallClient() {
   const [hintText, setHintText] = useState('Najedź lub kliknij blok, aby zobaczyć szczegóły')
   const [zoomPct, setZoomPct] = useState(50)
   const [externalScale, setExternalScale] = useState<number | undefined>(undefined)
+
+  const counterBarRef = useRef<HTMLDivElement>(null)
+  const [digitW, setDigitW] = useState(24)
+
+  useEffect(() => {
+    const el = counterBarRef.current
+    if (!el) return
+    const calc = () => {
+      // overhead: 24px padding + 32px flex gaps + 1px separator + 24px inter-digit gaps (6*2 per counter * 2)
+      setDigitW(Math.min(24, Math.max(10, Math.floor((el.offsetWidth - 81) / 14))))
+    }
+    calc()
+    const ro = new ResizeObserver(calc)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const soldPixels = blocks.reduce((sum, b) => sum + b.width * b.height, 0)
   const freePixels = 1_000_000 - soldPixels
@@ -99,6 +115,7 @@ export default function PixelWallClient() {
 
       {/* Counter bar */}
       <div
+        ref={counterBarRef}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -114,7 +131,7 @@ export default function PixelWallClient() {
           <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, letterSpacing: '0.1em', color: '#B7B2A4', textTransform: 'uppercase' }}>
             Sprzedane
           </span>
-          <PixelCounter value={soldPixels} color="red" />
+          <PixelCounter value={soldPixels} color="red" digitWidth={digitW} />
         </div>
 
         <div style={{ width: 1, height: 36, background: '#2A2C36' }} />
@@ -123,7 +140,7 @@ export default function PixelWallClient() {
           <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, letterSpacing: '0.1em', color: '#B7B2A4', textTransform: 'uppercase' }}>
             Wolne
           </span>
-          <PixelCounter value={freePixels} color="green" />
+          <PixelCounter value={freePixels} color="green" digitWidth={digitW} />
         </div>
 
         {!isMobile && (
