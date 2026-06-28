@@ -91,6 +91,7 @@ export default function BuyPageContent() {
   const spaceRef       = useRef(false)
   const toolModeRef    = useRef<ToolMode>('draw')
   const snapEnabledRef = useRef(true)
+  const imageImgRef    = useRef<HTMLImageElement | null>(null)
 
   // React state
   const [sel, setSel]               = useState<Sel>({ x: 50, y: 50, w: initW, h: initH })
@@ -206,6 +207,10 @@ export default function BuyPageContent() {
     const overlap = isOverlapRef.current
     ctx.fillStyle = 'rgba(255,77,46,0.10)'
     ctx.fillRect(s.x, s.y, s.w, s.h)
+    // Uploaded image preview inside selection
+    if (imageImgRef.current) {
+      ctx.drawImage(imageImgRef.current, s.x, s.y, s.w, s.h)
+    }
     // Outer glow
     ctx.strokeStyle = 'rgba(255,77,46,0.25)'
     ctx.lineWidth = 4 / scale
@@ -268,6 +273,21 @@ export default function BuyPageContent() {
       if (data) { blocksRef.current = data as PixelBlock[]; scheduleRedraw() }
     })
   }, [scheduleRedraw])
+
+  // Load uploaded image into ref so draw() can access it
+  useEffect(() => {
+    if (!imagePreview) {
+      imageImgRef.current = null
+      scheduleRedraw()
+      return
+    }
+    const img = new Image()
+    img.onload = () => {
+      imageImgRef.current = img
+      scheduleRedraw()
+    }
+    img.src = imagePreview
+  }, [imagePreview, scheduleRedraw])
 
   const hasOverlap = useCallback((x: number, y: number, w: number, h: number) =>
     blocksRef.current.some(
