@@ -94,6 +94,8 @@ export default function BuyPageContent() {
   const toolModeRef    = useRef<ToolMode>('draw')
   const snapEnabledRef = useRef(true)
   const imageImgRef    = useRef<HTMLImageElement | null>(null)
+  const activePtrsRef  = useRef<Map<number, { x: number; y: number }>>(new Map())
+  const pinchRef       = useRef<{ dist: number } | null>(null)
 
   // React state
   const [sel, setSel]               = useState<Sel>({ x: 50, y: 50, w: initW, h: initH })
@@ -357,6 +359,15 @@ export default function BuyPageContent() {
     const onPointerDown = (e: PointerEvent) => {
       e.preventDefault()
       canvas.setPointerCapture(e.pointerId)
+      activePtrsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+      if (activePtrsRef.current.size === 2) {
+        const [a, b] = [...activePtrsRef.current.values()]
+        pinchRef.current = { dist: Math.hypot(b.x - a.x, b.y - a.y) }
+        dragRef.current.mode = 'none'
+        return
+      }
+
       const rect = canvas.getBoundingClientRect()
       const { lx, ly } = screenToGrid(e.clientX - rect.left, e.clientY - rect.top)
       dragRef.current.startClient = { x: e.clientX, y: e.clientY }
@@ -392,6 +403,27 @@ export default function BuyPageContent() {
     }
 
     const onPointerMove = (e: PointerEvent) => {
+      activePtrsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+      if (activePtrsRef.current.size === 2 && pinchRef.current) {
+        const [a, b] = [...activePtrsRef.current.values()]
+        const newDist = Math.hypot(b.x - a.x, b.y - a.y)
+        const factor = newDist / pinchRef.current.dist
+        const rect = canvas.getBoundingClientRect()
+        const cx = (a.x + b.x) / 2 - rect.left
+        const cy = (a.y + b.y) / 2 - rect.top
+        const { scale, offsetX, offsetY } = viewRef.current
+        const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor))
+        const ratio = newScale / scale
+        viewRef.current.scale   = newScale
+        viewRef.current.offsetX = cx - (cx - offsetX) * ratio
+        viewRef.current.offsetY = cy - (cy - offsetY) * ratio
+        pinchRef.current.dist = newDist
+        setZoomPct(scaleToPct(newScale))
+        scheduleRedraw()
+        return
+      }
+
       const rect = canvas.getBoundingClientRect()
       const { lx, ly } = screenToGrid(e.clientX - rect.left, e.clientY - rect.top)
       const { mode, startClient, startGrid, startSel, startView } = dragRef.current
@@ -452,7 +484,9 @@ export default function BuyPageContent() {
       }
     }
 
-    const onPointerUp = () => {
+    const onPointerUp = (e: PointerEvent) => {
+      activePtrsRef.current.delete(e.pointerId)
+      if (activePtrsRef.current.size < 2) pinchRef.current = null
       dragRef.current.mode = 'none'
       canvas.style.cursor = (toolModeRef.current === 'pan' || spaceRef.current) ? 'grab' : 'crosshair'
     }
@@ -616,7 +650,7 @@ export default function BuyPageContent() {
       <div style={{ flex: isMobile ? 'none' : 1, height: isMobile ? '45vh' : undefined, position: 'relative', background: '#E8E4DC', overflow: 'hidden' }}>
         <canvas
           ref={canvasRef}
-          style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', cursor: 'crosshair' }}
+          style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', cursor: 'crosshair', touchAction: 'none' }}
         />
 
         {/* Floating tool buttons */}

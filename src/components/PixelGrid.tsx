@@ -30,6 +30,8 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   const rafRef = useRef<number | null>(null)
   const dprRef = useRef(1)
   const initializedRef = useRef(false)
+  const activePtrsRef = useRef<Map<number, { x: number; y: number }>>(new Map())
+  const pinchRef      = useRef<{ dist: number } | null>(null)
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -237,14 +239,44 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     }
 
     const onPointerDown = (e: PointerEvent) => {
+      canvas.setPointerCapture(e.pointerId)
+      activePtrsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+      if (activePtrsRef.current.size === 2) {
+        const [a, b] = [...activePtrsRef.current.values()]
+        pinchRef.current = { dist: Math.hypot(b.x - a.x, b.y - a.y) }
+        isDraggingRef.current = false
+        return
+      }
+
       isDraggingRef.current = true
       dragMovedRef.current = false
       lastPtrRef.current = { x: e.clientX, y: e.clientY }
-      canvas.setPointerCapture(e.pointerId)
       canvas.style.cursor = 'grabbing'
     }
 
     const onPointerMove = (e: PointerEvent) => {
+      activePtrsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+      if (activePtrsRef.current.size === 2 && pinchRef.current) {
+        const [a, b] = [...activePtrsRef.current.values()]
+        const newDist = Math.hypot(b.x - a.x, b.y - a.y)
+        const factor = newDist / pinchRef.current.dist
+        const rect = canvas.getBoundingClientRect()
+        const cx = (a.x + b.x) / 2 - rect.left
+        const cy = (a.y + b.y) / 2 - rect.top
+        const { scale, offsetX, offsetY } = viewRef.current
+        const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor))
+        const ratio = newScale / scale
+        viewRef.current.scale   = newScale
+        viewRef.current.offsetX = cx - (cx - offsetX) * ratio
+        viewRef.current.offsetY = cy - (cy - offsetY) * ratio
+        pinchRef.current.dist = newDist
+        onZoomChange(Math.round(((newScale - MIN_SCALE) / (MAX_SCALE * 0.2 - MIN_SCALE)) * 100))
+        scheduleRedraw()
+        return
+      }
+
       const rect = canvas.getBoundingClientRect()
       const mx = e.clientX - rect.left
       const my = e.clientY - rect.top
@@ -264,6 +296,8 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     }
 
     const onPointerUp = (e: PointerEvent) => {
+      activePtrsRef.current.delete(e.pointerId)
+      if (activePtrsRef.current.size < 2) pinchRef.current = null
       isDraggingRef.current = false
       canvas.style.cursor = 'crosshair'
       if (!dragMovedRef.current) {
@@ -291,7 +325,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   return (
     <canvas
       ref={canvasRef}
-      style={{ display: 'block', width: '100%', height: '100%', cursor: 'crosshair' }}
+      style={{ display: 'block', width: '100%', height: '100%', cursor: 'crosshair', touchAction: 'none' }}
     />
   )
 }
