@@ -3,7 +3,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { useBreakpoint } from '@/hooks/useBreakpoint'
 import type { PixelBlock } from '@/types'
 
 const GRID_W    = 1000
@@ -11,6 +10,7 @@ const GRID_H    = 1000
 const GRID_STEP = 20
 const MIN_SCALE = 0.08
 const MAX_SCALE = 6
+
 
 const scaleToPct = (s: number) =>
   Math.round(Math.log(s / MIN_SCALE) / Math.log(MAX_SCALE / MIN_SCALE) * 100)
@@ -29,8 +29,8 @@ const HANDLE_CURSORS: Record<Handle, string> = {
 }
 const HANDLE_NAMES: Handle[] = ['nw','n','ne','w','e','sw','s','se']
 
-function hitTestSel(lx: number, ly: number, sel: Sel, scale: number, isMobile: boolean): Handle | 'body' | null {
-  const r = (isMobile ? 20 : 10) / scale
+function hitTestSel(lx: number, ly: number, sel: Sel, scale: number): Handle | 'body' | null {
+  const r = 10 / scale
   const { x, y, w, h } = sel
   const cx = x + w / 2, cy = y + h / 2
   const pts: [Handle, number, number][] = [
@@ -59,13 +59,9 @@ function applyResize(handle: Handle, start: Sel, gdx: number, gdy: number, snap:
 export default function BuyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { isMobile } = useBreakpoint()
 
   const initW = Math.max(10, Math.min(GRID_W - 10, Number(searchParams.get('w') ?? 10)))
   const initH = Math.max(10, Math.min(GRID_H - 10, Number(searchParams.get('h') ?? 10)))
-
-  // Mobile wizard step: 1 = canvas, 2 = form
-  const [mobileStep, setMobileStep] = useState<1 | 2>(1)
 
   // Canvas / view refs
   const canvasRef      = useRef<HTMLCanvasElement>(null)
@@ -77,10 +73,8 @@ export default function BuyPageContent() {
   const initializedRef = useRef(false)
   const selRef         = useRef<Sel>({ x: 50, y: 50, w: initW, h: initH })
   const isOverlapRef   = useRef(false)
-  const isMobileRef    = useRef(isMobile)
 
-  useEffect(() => { isMobileRef.current = isMobile }, [isMobile])
-
+  // Drag ref — mutated imperatively to avoid stale closures
   const dragRef = useRef<{
     mode: DragMode
     startClient: { x: number; y: number }
@@ -99,6 +93,7 @@ export default function BuyPageContent() {
   const snapEnabledRef = useRef(true)
   const imageImgRef    = useRef<HTMLImageElement | null>(null)
 
+  // React state
   const [sel, setSel]               = useState<Sel>({ x: 50, y: 50, w: initW, h: initH })
   const [toolMode, setToolMode]     = useState<ToolMode>('draw')
   const [snapEnabled, setSnapEnabled] = useState(true)
@@ -116,6 +111,7 @@ export default function BuyPageContent() {
 
   const price = sel.w * sel.h
 
+  // Sync refs with state
   useEffect(() => {
     selRef.current = sel
     setSelW(sel.w)
@@ -154,11 +150,13 @@ export default function BuyPageContent() {
     ctx.fillStyle = '#FAF8F2'
     ctx.fillRect(0, 0, GRID_W, GRID_H)
 
+    // Visible range
     const sX = Math.max(0, Math.floor(-offsetX / scale / GRID_STEP) * GRID_STEP)
     const sY = Math.max(0, Math.floor(-offsetY / scale / GRID_STEP) * GRID_STEP)
     const eX = Math.min(GRID_W, sX + Math.ceil(cssW / scale / GRID_STEP + 2) * GRID_STEP)
     const eY = Math.min(GRID_H, sY + Math.ceil(cssH / scale / GRID_STEP + 2) * GRID_STEP)
 
+    // Minor grid (10px)
     const minor = GRID_STEP / 2
     ctx.strokeStyle = 'rgba(0,0,0,0.035)'
     ctx.lineWidth = 0.5 / scale
@@ -171,6 +169,7 @@ export default function BuyPageContent() {
     }
     ctx.stroke()
 
+    // Major grid (20px)
     ctx.strokeStyle = 'rgba(0,0,0,0.07)'
     ctx.lineWidth = 1 / scale
     ctx.beginPath()
@@ -178,10 +177,12 @@ export default function BuyPageContent() {
     for (let y = sY; y <= eY; y += GRID_STEP) { ctx.moveTo(sX, y); ctx.lineTo(eX, y) }
     ctx.stroke()
 
+    // Grid border
     ctx.strokeStyle = 'rgba(0,0,0,0.15)'
     ctx.lineWidth = 2 / scale
     ctx.strokeRect(0, 0, GRID_W, GRID_H)
 
+    // Sold blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#1A1C24']
     blocksRef.current.forEach(block => {
       const img = imagesRef.current.get(block.id)
@@ -202,19 +203,24 @@ export default function BuyPageContent() {
       }
     })
 
+    // Selection — vermilion
     const overlap = isOverlapRef.current
     ctx.fillStyle = 'rgba(255,77,46,0.10)'
     ctx.fillRect(s.x, s.y, s.w, s.h)
+    // Uploaded image preview inside selection
     if (imageImgRef.current) {
       ctx.drawImage(imageImgRef.current, s.x, s.y, s.w, s.h)
     }
+    // Outer glow
     ctx.strokeStyle = 'rgba(255,77,46,0.25)'
     ctx.lineWidth = 4 / scale
     ctx.strokeRect(s.x - 1/scale, s.y - 1/scale, s.w + 2/scale, s.h + 2/scale)
+    // Main border
     ctx.strokeStyle = overlap ? 'rgba(255,77,46,0.4)' : '#FF4D2E'
     ctx.lineWidth = 2 / scale
     ctx.strokeRect(s.x, s.y, s.w, s.h)
 
+    // Dim label
     const fontSize = Math.max(8, 11 / scale)
     ctx.font = `bold ${fontSize}px JetBrains Mono, monospace`
     const labelText = `${s.w} × ${s.h} px`
@@ -227,8 +233,8 @@ export default function BuyPageContent() {
     ctx.fillStyle = '#1A0A05'
     ctx.fillText(labelText, s.x + pad, ly + lh * 0.72)
 
-    // Handles — larger on mobile for touch
-    const hr = (isMobileRef.current ? 8 : 5) / scale
+    // 8 circular handles
+    const hr = 5 / scale
     const pts: [number,number][] = [
       [s.x,           s.y],           [s.x + s.w/2, s.y],   [s.x + s.w, s.y],
       [s.x,           s.y + s.h/2],                           [s.x + s.w, s.y + s.h/2],
@@ -245,13 +251,14 @@ export default function BuyPageContent() {
     })
 
     ctx.restore()
-  }, [])
+  }, []) // reads only refs
 
   const scheduleRedraw = useCallback(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(() => { draw(); rafRef.current = null })
   }, [draw])
 
+  // Recompute overlap + redraw when sel changes
   useEffect(() => {
     const s = selRef.current
     isOverlapRef.current = blocksRef.current.some(
@@ -260,12 +267,14 @@ export default function BuyPageContent() {
     scheduleRedraw()
   }, [sel, scheduleRedraw])
 
+  // Load blocks from Supabase
   useEffect(() => {
     supabase.from('pixel_blocks').select('*').then(({ data }) => {
       if (data) { blocksRef.current = data as PixelBlock[]; scheduleRedraw() }
     })
   }, [scheduleRedraw])
 
+  // Load uploaded image into ref so draw() can access it
   useEffect(() => {
     if (!imagePreview) {
       imageImgRef.current = null
@@ -359,7 +368,7 @@ export default function BuyPageContent() {
       }
 
       if (toolModeRef.current === 'pointer') {
-        const hit = hitTestSel(lx, ly, selRef.current, viewRef.current.scale, isMobileRef.current)
+        const hit = hitTestSel(lx, ly, selRef.current, viewRef.current.scale)
         if (hit && hit !== 'body') {
           dragRef.current.mode = hit
           canvas.style.cursor  = HANDLE_CURSORS[hit]
@@ -371,6 +380,7 @@ export default function BuyPageContent() {
           canvas.style.cursor  = 'crosshair'
         }
       } else {
+        // draw tool
         dragRef.current.mode = 'draw'
         const gx = snap(Math.max(0, Math.min(GRID_W - 10, Math.round(lx))))
         const gy = snap(Math.max(0, Math.min(GRID_H - 10, Math.round(ly))))
@@ -426,8 +436,9 @@ export default function BuyPageContent() {
         return
       }
 
+      // Hover — update cursor
       if (toolModeRef.current === 'pointer') {
-        const hit = hitTestSel(lx, ly, selRef.current, viewRef.current.scale, isMobileRef.current)
+        const hit = hitTestSel(lx, ly, selRef.current, viewRef.current.scale)
         if (hit && hit !== 'body') canvas.style.cursor = HANDLE_CURSORS[hit]
         else if (hit === 'body')   canvas.style.cursor = 'move'
         else                       canvas.style.cursor = 'crosshair'
@@ -587,42 +598,42 @@ export default function BuyPageContent() {
   const isOverlap = hasOverlap(sel.x, sel.y, sel.w, sel.h)
 
   const toolBtnSt = (active: boolean): React.CSSProperties => ({
-    width: isMobile ? 44 : 32,
-    height: isMobile ? 44 : 32,
-    border: 'none',
+    width: 32, height: 32, border: 'none',
     background: active ? '#0B0C10' : 'transparent',
     color: active ? '#F5F0E6' : '#8A8676',
-    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
   })
 
-  // ─── CANVAS WORKSPACE (shared between mobile step 1 and desktop left panel) ─
+  // ─── RENDER ────────────────────────────────────────────────────────────────
 
-  const canvasWorkspace = (
-    <div style={{ flex: 1, position: 'relative', background: '#E8E4DC', overflow: 'hidden' }}>
-      <canvas
-        ref={canvasRef}
-        style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', cursor: 'crosshair', touchAction: 'none' }}
-      />
+  return (
+    <div style={{ height: '100%', display: 'flex', overflow: 'hidden' }}>
 
-      {/* Floating tool buttons */}
-      <div style={{
-        position: 'absolute', top: 12, left: 12, zIndex: 5,
-        display: 'flex', gap: 2,
-        background: '#FAF8F2', border: '1px solid #E3DFD3', padding: isMobile ? 6 : 4,
-      }}>
-        {([
-          { mode: 'pointer' as ToolMode, icon: 'ti-pointer',    title: 'Zaznacz / przesuń' },
-          { mode: 'draw'    as ToolMode, icon: 'ti-square-plus', title: 'Rysuj nowy obszar' },
-          { mode: 'pan'     as ToolMode, icon: 'ti-hand-stop',   title: 'Przesuń widok (pan)' },
-        ] as const).map(({ mode, icon, title }) => (
-          <button key={mode} title={title} onClick={() => setToolMode(mode)} style={toolBtnSt(toolMode === mode)}>
-            <i className={`ti ${icon}`} />
-          </button>
-        ))}
-      </div>
+      {/* ── LEFT: canvas workspace ── */}
+      <div style={{ flex: 1, position: 'relative', background: '#E8E4DC', overflow: 'hidden' }}>
+        <canvas
+          ref={canvasRef}
+          style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', cursor: 'crosshair' }}
+        />
 
-      {/* Snap toggle — hidden on mobile (moved to form step) */}
-      {!isMobile && (
+        {/* Floating tool buttons */}
+        <div style={{
+          position: 'absolute', top: 16, left: 16, zIndex: 5,
+          display: 'flex', gap: 4,
+          background: '#FAF8F2', border: '1px solid #E3DFD3', padding: 4,
+        }}>
+          {([
+            { mode: 'pointer' as ToolMode, icon: 'ti-pointer',    title: 'Zaznacz / przesuń' },
+            { mode: 'draw'    as ToolMode, icon: 'ti-square-plus', title: 'Rysuj nowy obszar' },
+            { mode: 'pan'     as ToolMode, icon: 'ti-hand-stop',   title: 'Przesuń widok (pan)' },
+          ] as const).map(({ mode, icon, title }) => (
+            <button key={mode} title={title} onClick={() => setToolMode(mode)} style={toolBtnSt(toolMode === mode)}>
+              <i className={`ti ${icon}`} />
+            </button>
+          ))}
+        </div>
+
+        {/* Snap toggle */}
         <div
           onClick={() => setSnapEnabled(v => !v)}
           style={{
@@ -638,10 +649,8 @@ export default function BuyPageContent() {
             <div style={{ position: 'absolute', top: 2, left: snapEnabled ? 16 : 2, width: 12, height: 12, background: '#fff', borderRadius: '50%', transition: 'left .15s' }} />
           </div>
         </div>
-      )}
 
-      {/* Desktop bottom toolbar */}
-      {!isMobile && (
+        {/* Bottom toolbar */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -667,231 +676,149 @@ export default function BuyPageContent() {
             <span style={{ minWidth: 36 }}>{zoomPct}%</span>
           </div>
         </div>
-      )}
-
-      {/* Mobile sticky bottom bar (step 1 only) */}
-      {isMobile && (
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10,
-          background: '#0B0C10',
-          borderTop: '1px solid #1F212B',
-          display: 'flex', alignItems: 'center',
-          padding: '10px 12px', gap: 10,
-        }}>
-          {/* Zoom controls */}
-          <button onClick={() => zoomBy(0.8)} style={{ width: 36, height: 36, border: '1px solid #2A2C36', background: 'transparent', color: '#B7B2A4', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>−</button>
-          <button onClick={() => zoomBy(1.25)} style={{ width: 36, height: 36, border: '1px solid #2A2C36', background: 'transparent', color: '#B7B2A4', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>+</button>
-
-          {/* Live price/size */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#B7B2A4' }}>
-              {sel.w}×{sel.h} px
-            </div>
-            <div style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 16, color: '#FFD23F' }}>
-              {price.toLocaleString('pl-PL')} zł
-            </div>
-          </div>
-
-          {/* Go to form */}
-          <button
-            onClick={() => setMobileStep(2)}
-            style={{
-              background: isOverlap ? '#2A2C36' : '#FF4D2E',
-              color: isOverlap ? '#5A5C66' : '#fff',
-              fontFamily: 'var(--font-space-grotesk), sans-serif',
-              fontWeight: 700, fontSize: 14,
-              padding: '10px 16px', border: 'none', cursor: isOverlap ? 'not-allowed' : 'pointer',
-              borderRadius: 6, flexShrink: 0, whiteSpace: 'nowrap',
-            }}
-            disabled={isOverlap}
-          >
-            Dalej →
-          </button>
-        </div>
-      )}
-    </div>
-  )
-
-  // ─── SIDEBAR / FORM ────────────────────────────────────────────────────────
-
-  const sidebarForm = (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        width: isMobile ? '100%' : 340,
-        flexShrink: 0,
-        background: '#0B0C10',
-        borderLeft: isMobile ? 'none' : '1px solid #1F212B',
-        borderTop: isMobile ? '1px solid #1F212B' : 'none',
-        overflowY: 'auto',
-        padding: isMobile ? 20 : 24,
-        display: 'flex', flexDirection: 'column',
-      }}
-    >
-      {/* Mobile back button */}
-      {isMobile && (
-        <button
-          type="button"
-          onClick={() => setMobileStep(1)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            background: 'transparent', border: 'none',
-            color: '#B7B2A4', cursor: 'pointer',
-            fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 12,
-            padding: '0 0 16px', marginBottom: 4,
-          }}
-        >
-          <i className="ti ti-arrow-left" />
-          Wróć do zaznaczania
-        </button>
-      )}
-
-      <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.08em', color: '#FF4D2E', textTransform: 'uppercase', marginBottom: 10, display: 'block' }}>
-        Zakup pikseli
-      </span>
-      <h2 style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 700, fontSize: 22, color: '#F5F0E6', marginBottom: 20, letterSpacing: '-0.01em' }}>
-        Twój obszar
-      </h2>
-
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(46,230,166,0.08)', border: '1px solid rgba(46,230,166,0.25)', padding: '12px 14px', marginBottom: 20, fontSize: 12, color: '#B7B2A4', lineHeight: 1.5 }}>
-        <i className="ti ti-info-circle" style={{ color: '#2EE6A6', marginTop: 1, flexShrink: 0 }} />
-        <span>
-          {isMobile
-            ? 'Wróć do zaznaczania, aby zmienić obszar. Rozmiar i pozycję możesz też ustawić poniżej.'
-            : 'Przeciągnij narożniki na canvasie, by zmienić rozmiar, albo wpisz dokładne wartości poniżej — obie metody są zsynchronizowane.'}
-        </span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-        {[
-          { label: 'POZYCJA (X, Y)', val: `${sel.x}, ${sel.y}` },
-          { label: 'ROZMIAR',        val: `${sel.w}×${sel.h}` },
-        ].map(({ label, val }) => (
-          <div key={label} style={{ background: '#1A1C24', border: '1px solid #2A2C36', padding: '12px 14px' }}>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#B7B2A4', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>{label}</span>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 16, color: '#F5F0E6' }}>{val}</span>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ marginBottom: 18 }}>
-        <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-          Dokładny rozmiar (px)
-        </label>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#5A5C66', pointerEvents: 'none' }}>SZER</span>
-            <input
-              type="number" value={selW} min={10}
-              onChange={e => applySelW(Number(e.target.value))}
-              style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 10px 10px 44px', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 16, outline: 'none' }}
-            />
-          </div>
-          <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', color: '#5A5C66', fontSize: 13 }}>×</span>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#5A5C66', pointerEvents: 'none' }}>WYS</span>
-            <input
-              type="number" value={selH} min={10}
-              onChange={e => applySelH(Number(e.target.value))}
-              style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 10px 10px 44px', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 16, outline: 'none' }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {([
-        { id: 'owner', label: 'Nazwa właściciela', val: ownerName, set: setOwnerName, placeholder: 'np. Studio Orbit',  req: false },
-        { id: 'link',  label: 'Link URL',          val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false },
-        { id: 'alt',   label: 'Opis obrazka (alt)',val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false },
-      ] as const).map(({ id, label, val, set, placeholder, req }) => (
-        <div key={id} style={{ marginBottom: 16 }}>
-          <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-            {label}{req && <span style={{ color: '#FF4D2E' }}> *</span>}
-          </label>
-          <input
-            type="text" value={val} onChange={e => set(e.target.value)}
-            placeholder={placeholder} required={req}
-            style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 12px', fontFamily: 'var(--font-inter), sans-serif', fontSize: 16, outline: 'none' }}
-          />
-        </div>
-      ))}
-
-      <div style={{ marginBottom: 18 }}>
-        <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-          Obrazek <span style={{ color: '#FF4D2E' }}>*</span>
-        </label>
-        <label style={{ border: '1px dashed #2A2C36', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-          <div style={{ width: 38, height: 38, background: '#1A1C24', border: '1px solid #2A2C36', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {imagePreview
-              ? <img src={imagePreview} alt="" style={{ width: 38, height: 38, objectFit: 'cover' }} />
-              : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A5C66" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>}
-          </div>
-          <div style={{ fontSize: 13, color: '#B7B2A4' }}>
-            <b style={{ color: '#F5F0E6', fontWeight: 500 }}>{imageFile ? imageFile.name : 'Kliknij, aby wgrać'}</b>
-            {!imageFile && <><br />dopasujemy do {sel.w}×{sel.h} px</>}
-          </div>
-          <input type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
-        </label>
-      </div>
-
-      <div style={{ background: '#1A1C24', border: '1px solid #2A2C36', padding: 16, marginBottom: 18 }}>
-        {[
-          { label: 'Obszar',        val: `${sel.w} × ${sel.h} px` },
-          { label: 'Liczba pikseli',val: price.toLocaleString('pl-PL') },
-        ].map(({ label, val }) => (
-          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#B7B2A4', padding: '6px 0', borderBottom: '1px solid #1F212B' }}>
-            <span>{label}</span>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', color: '#F5F0E6' }}>{val}</span>
-          </div>
-        ))}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12 }}>
-          <span style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 600, fontSize: 14, color: '#F5F0E6' }}>Do zapłaty</span>
-          <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 26, color: '#FFD23F' }}>{price.toLocaleString('pl-PL')} zł</span>
-        </div>
-      </div>
-
-      {error && (
-        <div style={{ background: 'rgba(255,77,46,0.1)', border: '1px solid rgba(255,77,46,0.3)', padding: '12px 16px', color: '#FF4D2E', fontSize: 13, fontFamily: 'var(--font-jetbrains-mono), monospace', marginBottom: 16 }}>
-          {error}
-        </div>
-      )}
-
-      {isOverlap && (
-        <div style={{ background: 'rgba(255,77,46,0.07)', border: '1px solid rgba(255,77,46,0.25)', padding: '10px 14px', color: '#FF4D2E', fontSize: 12, fontFamily: 'var(--font-jetbrains-mono), monospace', marginBottom: 14 }}>
-          ⚠ Obszar nakłada się na istniejący blok — wybierz inne miejsce.
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={uploading || isOverlap}
+      {/* ── RIGHT: sidebar + form ── */}
+      <form
+        onSubmit={handleSubmit}
         style={{
-          width: '100%', background: uploading || isOverlap ? '#2A2C36' : '#FF4D2E',
-          color: uploading || isOverlap ? '#5A5C66' : '#1A0A05',
-          fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 700, fontSize: 15,
-          padding: 16, border: 'none', cursor: uploading || isOverlap ? 'not-allowed' : 'pointer',
-          minHeight: 52,
+          width: 340, flexShrink: 0,
+          background: '#0B0C10', borderLeft: '1px solid #1F212B',
+          overflowY: 'auto', padding: 24,
+          display: 'flex', flexDirection: 'column',
         }}
       >
-        {uploading ? 'Wgrywam…' : `Kup ${sel.w}×${sel.h} px za ${price.toLocaleString('pl-PL')} zł`}
-      </button>
-    </form>
-  )
+        <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.08em', color: '#FF4D2E', textTransform: 'uppercase', marginBottom: 10, display: 'block' }}>
+          Zakup pikseli
+        </span>
+        <h2 style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 700, fontSize: 22, color: '#F5F0E6', marginBottom: 20, letterSpacing: '-0.01em' }}>
+          Twój obszar
+        </h2>
 
-  // ─── RENDER ────────────────────────────────────────────────────────────────
+        {/* Hint banner */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(46,230,166,0.08)', border: '1px solid rgba(46,230,166,0.25)', padding: '12px 14px', marginBottom: 20, fontSize: 12, color: '#B7B2A4', lineHeight: 1.5 }}>
+          <i className="ti ti-info-circle" style={{ color: '#2EE6A6', marginTop: 1, flexShrink: 0 }} />
+          <span>Przeciągnij narożniki na canvasie, by zmienić rozmiar, albo wpisz dokładne wartości poniżej — obie metody są zsynchronizowane.</span>
+        </div>
 
-  if (isMobile) {
-    return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {mobileStep === 1 ? canvasWorkspace : sidebarForm}
-      </div>
-    )
-  }
+        {/* Live stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
+          {[
+            { label: 'POZYCJA (X, Y)', val: `${sel.x}, ${sel.y}` },
+            { label: 'ROZMIAR',        val: `${sel.w}×${sel.h}` },
+          ].map(({ label, val }) => (
+            <div key={label} style={{ background: '#1A1C24', border: '1px solid #2A2C36', padding: '12px 14px' }}>
+              <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#B7B2A4', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>{label}</span>
+              <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 16, color: '#F5F0E6' }}>{val}</span>
+            </div>
+          ))}
+        </div>
 
-  return (
-    <div style={{ height: '100%', display: 'flex', overflow: 'hidden' }}>
-      {canvasWorkspace}
-      {sidebarForm}
+        {/* Exact size inputs */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+            Dokładny rozmiar (px)
+          </label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#5A5C66', pointerEvents: 'none' }}>SZER</span>
+              <input
+                type="number" value={selW} min={10}
+                onChange={e => applySelW(Number(e.target.value))}
+                style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 10px 10px 44px', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 13, outline: 'none' }}
+              />
+            </div>
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', color: '#5A5C66', fontSize: 13 }}>×</span>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#5A5C66', pointerEvents: 'none' }}>WYS</span>
+              <input
+                type="number" value={selH} min={10}
+                onChange={e => applySelH(Number(e.target.value))}
+                style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 10px 10px 44px', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 13, outline: 'none' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Text fields */}
+        {([
+          { id: 'owner', label: 'Nazwa właściciela', val: ownerName, set: setOwnerName, placeholder: 'np. Studio Orbit',  req: false },
+          { id: 'link',  label: 'Link URL',          val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false },
+          { id: 'alt',   label: 'Opis obrazka (alt)',val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false },
+        ] as const).map(({ id, label, val, set, placeholder, req }) => (
+          <div key={id} style={{ marginBottom: 16 }}>
+            <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+              {label}{req && <span style={{ color: '#FF4D2E' }}> *</span>}
+            </label>
+            <input
+              type="text" value={val} onChange={e => set(e.target.value)}
+              placeholder={placeholder} required={req}
+              style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 12px', fontFamily: 'var(--font-inter), sans-serif', fontSize: 14, outline: 'none' }}
+            />
+          </div>
+        ))}
+
+        {/* Image upload */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+            Obrazek <span style={{ color: '#FF4D2E' }}>*</span>
+          </label>
+          <label style={{ border: '1px dashed #2A2C36', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+            <div style={{ width: 38, height: 38, background: '#1A1C24', border: '1px solid #2A2C36', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {imagePreview
+                ? <img src={imagePreview} alt="" style={{ width: 38, height: 38, objectFit: 'cover' }} />
+                : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A5C66" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>}
+            </div>
+            <div style={{ fontSize: 13, color: '#B7B2A4' }}>
+              <b style={{ color: '#F5F0E6', fontWeight: 500 }}>{imageFile ? imageFile.name : 'Kliknij, aby wgrać'}</b>
+              {!imageFile && <><br />dopasujemy do {sel.w}×{sel.h} px</>}
+            </div>
+            <input type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
+          </label>
+        </div>
+
+        {/* Price summary */}
+        <div style={{ background: '#1A1C24', border: '1px solid #2A2C36', padding: 16, marginBottom: 18 }}>
+          {[
+            { label: 'Obszar',        val: `${sel.w} × ${sel.h} px` },
+            { label: 'Liczba pikseli',val: price.toLocaleString('pl-PL') },
+          ].map(({ label, val }) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#B7B2A4', padding: '6px 0', borderBottom: '1px solid #1F212B' }}>
+              <span>{label}</span>
+              <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', color: '#F5F0E6' }}>{val}</span>
+            </div>
+          ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12 }}>
+            <span style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 600, fontSize: 14, color: '#F5F0E6' }}>Do zapłaty</span>
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 26, color: '#FFD23F' }}>{price.toLocaleString('pl-PL')} zł</span>
+          </div>
+        </div>
+
+        {error && (
+          <div style={{ background: 'rgba(255,77,46,0.1)', border: '1px solid rgba(255,77,46,0.3)', padding: '12px 16px', color: '#FF4D2E', fontSize: 13, fontFamily: 'var(--font-jetbrains-mono), monospace', marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
+
+        {isOverlap && (
+          <div style={{ background: 'rgba(255,77,46,0.07)', border: '1px solid rgba(255,77,46,0.25)', padding: '10px 14px', color: '#FF4D2E', fontSize: 12, fontFamily: 'var(--font-jetbrains-mono), monospace', marginBottom: 14 }}>
+            ⚠ Obszar nakłada się na istniejący blok — wybierz inne miejsce.
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={uploading || isOverlap}
+          style={{
+            width: '100%', background: uploading || isOverlap ? '#2A2C36' : '#FF4D2E',
+            color: uploading || isOverlap ? '#5A5C66' : '#1A0A05',
+            fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 700, fontSize: 15,
+            padding: 16, border: 'none', cursor: uploading || isOverlap ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {uploading ? 'Wgrywam…' : `Kup ${sel.w}×${sel.h} px za ${price.toLocaleString('pl-PL')} zł`}
+        </button>
+      </form>
     </div>
   )
 }

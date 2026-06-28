@@ -32,25 +32,6 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Prevent default touch actions on canvas elements — pointer events handle everything */
-canvas {
-  touch-action: none;
-}
-
-/* iOS Safari: inputs smaller than 16px trigger auto-zoom — prevent it */
-@media (max-width: 639px) {
-  input[type="text"],
-  input[type="number"],
-  input[type="email"],
-  input[type="search"],
-  input[type="tel"],
-  input[type="url"],
-  textarea,
-  select {
-    font-size: 16px !important;
-  }
-}
-
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }

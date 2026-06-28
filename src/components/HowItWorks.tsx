@@ -1,7 +1,3 @@
-'use client'
-
-import { useBreakpoint } from '@/hooks/useBreakpoint'
-
 const steps = [
   {
     num: '01',
@@ -24,11 +20,9 @@ const steps = [
 ]
 
 export default function HowItWorks() {
-  const { isMobile } = useBreakpoint()
-
   return (
-    <section style={{ padding: isMobile ? '40px 20px' : '80px 48px', maxWidth: 1080, margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: isMobile ? 32 : 56 }}>
+    <section style={{ padding: '80px 48px', maxWidth: 1080, margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: 56 }}>
         <span
           style={{
             fontFamily: 'var(--font-jetbrains-mono), monospace',
@@ -63,16 +57,22 @@ export default function HowItWorks() {
               background: '#1A1C24',
               border: '1px solid #2A2C36',
               borderRadius: 12,
-              padding: isMobile ? '24px 20px' : '32px 28px',
+              padding: '32px 28px',
             }}
           >
             <div
               style={{
-                width: 40, height: 40,
-                background: s.color, borderRadius: 8,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 40,
+                height: 40,
+                background: s.color,
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 fontFamily: 'var(--font-jetbrains-mono), monospace',
-                fontWeight: 700, fontSize: 14, color: '#0B0C10',
+                fontWeight: 700,
+                fontSize: 14,
+                color: '#0B0C10',
                 marginBottom: 20,
               }}
             >
@@ -81,7 +81,10 @@ export default function HowItWorks() {
             <h3
               style={{
                 fontFamily: 'var(--font-space-grotesk), sans-serif',
-                fontWeight: 600, fontSize: 20, color: '#F5F0E6', marginBottom: 12,
+                fontWeight: 600,
+                fontSize: 20,
+                color: '#F5F0E6',
+                marginBottom: 12,
               }}
             >
               {s.title}

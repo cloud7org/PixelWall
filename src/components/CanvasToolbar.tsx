@@ -1,7 +1,5 @@
 'use client'
 
-import { useBreakpoint } from '@/hooks/useBreakpoint'
-
 interface Props {
   hintText: string
   zoomPct: number
@@ -10,15 +8,13 @@ interface Props {
 }
 
 export default function CanvasToolbar({ hintText, zoomPct, onZoomChange, onFullscreen }: Props) {
-  const { isMobile } = useBreakpoint()
-
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: isMobile ? '0 10px' : '0 18px',
+        padding: '0 18px',
         height: 38,
         borderTop: '1px solid #E3DFD3',
         background: '#FAF8F2',
@@ -29,29 +25,22 @@ export default function CanvasToolbar({ hintText, zoomPct, onZoomChange, onFulls
         userSelect: 'none',
       }}
     >
-      {/* Left: hint */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
           <circle cx="6" cy="6" r="4" /><line x1="6" y1="0" x2="6" y2="2" /><line x1="6" y1="10" x2="6" y2="12" /><line x1="0" y1="6" x2="2" y2="6" /><line x1="10" y1="6" x2="12" y2="6" />
         </svg>
-        {!isMobile && (
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{hintText}</span>
-        )}
+        <span>{hintText}</span>
       </div>
 
-      {/* Middle: scroll hint — hidden on mobile */}
-      {!isMobile && (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#B0AA9A', fontSize: 11 }}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M6 1v10M1 6h10" /><path d="M4 3l2-2 2 2M4 9l2 2 2-2" />
-          </svg>
-          <span style={{ fontWeight: 600 }}>Scroll lub rozsuń palce, aby przybliżyć / oddalić</span>
-        </div>
-      )}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#B0AA9A', fontSize: 11 }}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M6 1v10M1 6h10" /><path d="M4 3l2-2 2 2M4 9l2 2 2-2" />
+        </svg>
+        <span style={{ fontWeight: 600 }}>Scroll lub rozsuń palce, aby przybliżyć / oddalić</span>
+      </div>
 
-      {/* Right: zoom controls */}
-      <div style={{ flex: isMobile ? 'unset' : 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: isMobile ? 8 : 12 }}>
-        <div style={{ position: 'relative', width: isMobile ? 60 : 90, height: 3, background: '#E3DFD3' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
+        <div style={{ position: 'relative', width: 90, height: 3, background: '#E3DFD3' }}>
           <input
             type="range"
             min={10}
@@ -64,8 +53,8 @@ export default function CanvasToolbar({ hintText, zoomPct, onZoomChange, onFulls
               width: '100%',
               opacity: 0,
               cursor: 'pointer',
-              height: '300%',
-              top: '-100%',
+              height: '200%',
+              top: '-50%',
             }}
           />
           <div
@@ -82,7 +71,7 @@ export default function CanvasToolbar({ hintText, zoomPct, onZoomChange, onFulls
             }}
           />
         </div>
-        <span style={{ minWidth: 30 }}>{zoomPct}%</span>
+        <span style={{ minWidth: 36 }}>{zoomPct}%</span>
         <button
           onClick={onFullscreen}
           title="Pełny ekran"
