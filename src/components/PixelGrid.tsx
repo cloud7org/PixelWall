@@ -52,7 +52,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   const snap = (v: number) => Math.round(v / 10) * 10
 
   const findFreeHintPos = useCallback((): { x: number; y: number } | null => {
-    const HW = 20, HH = 20
+    const HW = 40, HH = 40
     for (let y = 0; y <= GRID_H - HH; y += GRID_STEP) {
       for (let x = 0; x <= GRID_W - HW; x += GRID_STEP) {
         const free = !blocksRef.current.some(
@@ -158,7 +158,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       const elapsed = performance.now() - hintStartRef.current
       const pulse = (Math.sin(elapsed / 400) + 1) / 2
       const alpha = 0.35 + pulse * 0.65
-      const hx = hp.x, hy = hp.y, hw = 20, hh = 20
+      const hx = hp.x, hy = hp.y, hw = 40, hh = 40
       ctx.fillStyle = `rgba(255,77,46,${alpha * 0.12})`
       ctx.fillRect(hx, hy, hw, hh)
       ctx.setLineDash([3 / scale, 3 / scale])
