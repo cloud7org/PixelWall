@@ -108,8 +108,7 @@ export default function PixelWallClient() {
           {isMobile ? (
             <span style={{ opacity: carouselFading ? 0 : 1, transition: 'opacity 0.4s ease' }}>
               {carouselSlide === 0
-                ? <>Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze</>
-                : <span style={{
+                ? <span style={{
                     fontWeight: 600,
                     background: 'linear-gradient(90deg, #b8860b 0%, #FFD23F 40%, #ffe88a 60%, #FFD23F 80%, #b8860b 100%)',
                     backgroundSize: '200% auto',
@@ -120,6 +119,7 @@ export default function PixelWallClient() {
                   }}>
                     Twoje logo na Times Square w Nowym Jorku
                   </span>
+                : <>Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze</>
               }
             </span>
           ) : (
