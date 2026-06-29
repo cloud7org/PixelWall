@@ -11,6 +11,7 @@ interface Props {
   onZoomChange: (pct: number) => void
   externalScale?: number
   reinitKey?: number | string
+  fetchKey?: number
   showHint?: boolean
   onSelectionComplete?: (sel: { x: number; y: number; w: number; h: number }) => void
 }
@@ -21,7 +22,7 @@ const GRID_STEP = 20
 const MIN_SCALE = 0.2
 const MAX_SCALE = 8
 
-export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomChange, externalScale, reinitKey, showHint, onSelectionComplete }: Props) {
+export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomChange, externalScale, reinitKey, fetchKey, showHint, onSelectionComplete }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const blocksRef = useRef<PixelBlock[]>([])
   const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map())
@@ -254,11 +255,25 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
         hintPosRef.current = findFreeHintPos()
         onNewBlock(block)
         flashBlock(block)
+        scheduleRedraw()
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [onBlocksLoaded, onNewBlock, scheduleRedraw, flashBlock, findFreeHintPos])
+
+  // Re-fetch blocks when fetchKey changes (fallback for when realtime misses the INSERT)
+  useEffect(() => {
+    if (fetchKey === undefined) return
+    supabase.from('pixel_blocks').select('*').then(({ data }) => {
+      if (data) {
+        blocksRef.current = data as PixelBlock[]
+        hintPosRef.current = findFreeHintPos()
+        onBlocksLoaded(data as PixelBlock[])
+        scheduleRedraw()
+      }
+    })
+  }, [fetchKey, findFreeHintPos, onBlocksLoaded, scheduleRedraw])
 
   // External scale from toolbar
   useEffect(() => {

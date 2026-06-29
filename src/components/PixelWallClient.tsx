@@ -14,6 +14,7 @@ export default function PixelWallClient() {
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
   const [buyOpen, setBuyOpen] = useState(false)
   const [initialSel, setInitialSel] = useState<{ x: number; y: number; w: number; h: number } | undefined>(undefined)
+  const [fetchKey, setFetchKey] = useState<number | undefined>(undefined)
   const [hintText, setHintText] = useState('Najedź lub kliknij blok, aby zobaczyć szczegóły')
   const [zoomPct, setZoomPct] = useState(50)
   const [externalScale, setExternalScale] = useState<number | undefined>(undefined)
@@ -133,6 +134,7 @@ export default function PixelWallClient() {
           onZoomChange={handleZoomChange}
           externalScale={externalScale}
           reinitKey={Number(isMobile)}
+          fetchKey={fetchKey}
           showHint={!buyOpen}
           onSelectionComplete={handleSelectionComplete}
         />
@@ -201,7 +203,7 @@ export default function PixelWallClient() {
             </div>
           }>
             <BuyPageContent
-              onClose={() => { setBuyOpen(false); setInitialSel(undefined) }}
+              onClose={() => { setBuyOpen(false); setInitialSel(undefined); setFetchKey(k => (k ?? 0) + 1) }}
               initialSel={initialSel}
             />
           </Suspense>
