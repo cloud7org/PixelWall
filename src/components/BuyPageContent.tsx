@@ -57,7 +57,7 @@ function applyResize(handle: Handle, start: Sel, gdx: number, gdy: number, snap:
   return { x, y, w: Math.min(w, GRID_W - x), h: Math.min(h, GRID_H - y) }
 }
 
-export default function BuyPageContent() {
+export default function BuyPageContent({ onClose }: { onClose?: () => void } = {}) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { isMobile } = useBreakpoint()
@@ -612,7 +612,7 @@ export default function BuyPageContent() {
       })
       if (insErr) throw new Error(insErr.message)
       setSuccess(true)
-      setTimeout(() => router.push('/'), 2500)
+      setTimeout(() => { if (onClose) onClose(); else router.push('/') }, 2500)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nieznany błąd')
     } finally {
@@ -730,6 +730,22 @@ export default function BuyPageContent() {
           display: 'flex', flexDirection: 'column',
         }}
       >
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            title="Zamknij"
+            style={{
+              alignSelf: 'flex-end', marginBottom: 12,
+              background: 'transparent', border: '1px solid #2A2C36',
+              color: '#B7B2A4', width: 32, height: 32,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', fontSize: 20, flexShrink: 0, lineHeight: 1,
+            }}
+          >
+            ×
+          </button>
+        )}
         <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.08em', color: '#FF4D2E', textTransform: 'uppercase', marginBottom: 10, display: 'block' }}>
           Zakup pikseli
         </span>

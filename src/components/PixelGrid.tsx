@@ -11,6 +11,7 @@ interface Props {
   onZoomChange: (pct: number) => void
   externalScale?: number
   reinitKey?: number | string
+  showHint?: boolean
 }
 
 const GRID_W = 1000
@@ -19,7 +20,7 @@ const GRID_STEP = 20
 const MIN_SCALE = 0.2
 const MAX_SCALE = 8
 
-export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomChange, externalScale, reinitKey }: Props) {
+export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomChange, externalScale, reinitKey, showHint }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const blocksRef = useRef<PixelBlock[]>([])
   const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map())
@@ -32,6 +33,10 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   const initializedRef = useRef(false)
   const activePtrsRef = useRef<Map<number, { x: number; y: number }>>(new Map())
   const pinchRef      = useRef<{ dist: number } | null>(null)
+  const showHintRef   = useRef(false)
+  const hintRafRef    = useRef<number | null>(null)
+  const hintStartRef  = useRef(0)
+  useEffect(() => { showHintRef.current = !!showHint }, [showHint])
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -98,6 +103,34 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       }
     })
 
+    // Animated hint rectangle
+    if (showHintRef.current) {
+      const elapsed = performance.now() - hintStartRef.current
+      const pulse = (Math.sin(elapsed / 400) + 1) / 2
+      const alpha = 0.35 + pulse * 0.65
+      const hx = 60, hy = 60, hw = 20, hh = 20
+      ctx.fillStyle = `rgba(255,77,46,${alpha * 0.12})`
+      ctx.fillRect(hx, hy, hw, hh)
+      ctx.setLineDash([3 / scale, 3 / scale])
+      ctx.lineDashOffset = -(elapsed / 80) % (6 / scale)
+      ctx.strokeStyle = `rgba(255,77,46,${alpha})`
+      ctx.lineWidth = 2 / scale
+      ctx.strokeRect(hx, hy, hw, hh)
+      ctx.setLineDash([])
+      ctx.lineDashOffset = 0
+      const fs = Math.max(4, 7 / scale)
+      ctx.font = `bold ${fs}px JetBrains Mono, monospace`
+      const lbl = 'Zaznacz obszar'
+      const tw = ctx.measureText(lbl).width
+      const pad = 2 / scale
+      const lh = fs * 1.7
+      const ly = hy - lh - 1 / scale
+      ctx.fillStyle = `rgba(255,77,46,${alpha * 0.9})`
+      ctx.fillRect(hx, ly, tw + pad * 2, lh)
+      ctx.fillStyle = '#1A0A05'
+      ctx.fillText(lbl, hx + pad, ly + lh * 0.75)
+    }
+
     ctx.restore()
   }, [])
 
@@ -105,6 +138,19 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(() => { draw(); rafRef.current = null })
   }, [draw])
+
+  // Continuous animation loop for the hint pulse
+  useEffect(() => {
+    if (!showHint) {
+      if (hintRafRef.current !== null) { cancelAnimationFrame(hintRafRef.current); hintRafRef.current = null }
+      scheduleRedraw()
+      return
+    }
+    hintStartRef.current = performance.now()
+    const loop = () => { draw(); hintRafRef.current = requestAnimationFrame(loop) }
+    hintRafRef.current = requestAnimationFrame(loop)
+    return () => { if (hintRafRef.current !== null) { cancelAnimationFrame(hintRafRef.current); hintRafRef.current = null } }
+  }, [showHint, draw, scheduleRedraw])
 
   const resize = useCallback(() => {
     const canvas = canvasRef.current

@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, Suspense } from 'react'
 import Navbar from './Navbar'
 import PixelGrid from './PixelGrid'
 import CanvasToolbar from './CanvasToolbar'
 import PixelCounter from './PixelCounter'
+import BuyPageContent from './BuyPageContent'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 export default function PixelWallClient() {
   const { isMobile } = useBreakpoint()
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
+  const [buyOpen, setBuyOpen] = useState(false)
   const [hintText, setHintText] = useState('Najedź lub kliknij blok, aby zobaczyć szczegóły')
   const [zoomPct, setZoomPct] = useState(50)
   const [externalScale, setExternalScale] = useState<number | undefined>(undefined)
@@ -62,7 +64,10 @@ export default function PixelWallClient() {
           background: '#0B0C10',
           borderBottom: '1px solid #1F212B',
           flexShrink: 0,
-          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
         }}
       >
         <h1
@@ -76,22 +81,42 @@ export default function PixelWallClient() {
           }}
         >
           Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze
-          <span style={{ display: 'inline-block', position: 'relative', marginLeft: 12, fontSize: '0.7em', verticalAlign: 'middle' }}>
-            <span
-              style={{
-                fontWeight: 600,
-                background: 'linear-gradient(90deg, #b8860b 0%, #FFD23F 40%, #ffe88a 60%, #FFD23F 80%, #b8860b 100%)',
-                backgroundSize: '200% auto',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                animation: 'goldShimmer 6s linear infinite',
-              }}
-            >
-              — Twoje logo na Times Square w Nowym Jorku
+          {!isMobile && (
+            <span style={{ display: 'inline-block', position: 'relative', marginLeft: 12, fontSize: '0.7em', verticalAlign: 'middle' }}>
+              <span
+                style={{
+                  fontWeight: 600,
+                  background: 'linear-gradient(90deg, #b8860b 0%, #FFD23F 40%, #ffe88a 60%, #FFD23F 80%, #b8860b 100%)',
+                  backgroundSize: '200% auto',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  animation: 'goldShimmer 6s linear infinite',
+                }}
+              >
+                — Twoje logo na Times Square w Nowym Jorku
+              </span>
             </span>
-          </span>
+          )}
         </h1>
+        <button
+          onClick={() => setBuyOpen(true)}
+          style={{
+            flexShrink: 0,
+            background: '#FF4D2E',
+            color: '#1A0A05',
+            fontFamily: 'var(--font-space-grotesk), sans-serif',
+            fontWeight: 700,
+            fontSize: isMobile ? 13 : 15,
+            padding: isMobile ? '8px 14px' : '10px 20px',
+            border: 'none',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          + Dodaj obraz
+        </button>
       </div>
 
       {/* Canvas */}
@@ -103,6 +128,7 @@ export default function PixelWallClient() {
           onZoomChange={handleZoomChange}
           externalScale={externalScale}
           reinitKey={Number(isMobile)}
+          showHint={!buyOpen}
         />
       </div>
 
@@ -152,6 +178,26 @@ export default function PixelWallClient() {
           </>
         )}
       </div>
+
+      {/* Buy modal overlay */}
+      {buyOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          display: 'flex', flexDirection: 'column',
+          overflow: 'hidden', background: '#0B0C10',
+        }}>
+          <Suspense fallback={
+            <div style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#B7B2A4', fontFamily: 'var(--font-jetbrains-mono), monospace',
+            }}>
+              Ładowanie…
+            </div>
+          }>
+            <BuyPageContent onClose={() => setBuyOpen(false)} />
+          </Suspense>
+        </div>
+      )}
     </div>
   )
 }
