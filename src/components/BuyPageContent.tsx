@@ -804,8 +804,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         {/* Text fields */}
         {([
           { id: 'owner', label: 'Nazwa właściciela', val: ownerName, set: setOwnerName, placeholder: 'np. Studio Orbit',  req: true },
-          { id: 'link',  label: 'Link URL',          val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false },
-          { id: 'alt',   label: 'Opis obrazka (alt)',val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false },
+          { id: 'link',  label: 'Link URL (strona, blog, etc)', val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false },
+          { id: 'alt',   label: 'Opis obrazka',              val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false },
         ] as const).map(({ id, label, val, set, placeholder, req }) => (
           <div key={id} style={{ marginBottom: 16 }}>
             <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>

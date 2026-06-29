@@ -80,13 +80,27 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     ctx.translate(offsetX, offsetY)
     ctx.scale(scale, scale)
 
-    // Grid lines (only visible range)
-    const startX = Math.max(0, Math.floor(-offsetX / scale / GRID_STEP) * GRID_STEP)
-    const startY = Math.max(0, Math.floor(-offsetY / scale / GRID_STEP) * GRID_STEP)
-    const endX = Math.min(GRID_W, startX + Math.ceil(cssW / scale / GRID_STEP + 2) * GRID_STEP)
-    const endY = Math.min(GRID_H, startY + Math.ceil(cssH / scale / GRID_STEP + 2) * GRID_STEP)
+    // Grid lines — millimeter paper style
+    const MINOR = 10
+    const startX = Math.max(0, Math.floor(-offsetX / scale / MINOR) * MINOR)
+    const startY = Math.max(0, Math.floor(-offsetY / scale / MINOR) * MINOR)
+    const endX   = Math.min(GRID_W, startX + Math.ceil(cssW / scale / MINOR + 2) * MINOR)
+    const endY   = Math.min(GRID_H, startY + Math.ceil(cssH / scale / MINOR + 2) * MINOR)
 
-    ctx.strokeStyle = 'rgba(0,0,0,0.06)'
+    // Pass 1: minor lines every 10px (thin, faint)
+    ctx.strokeStyle = 'rgba(0,0,0,0.07)'
+    ctx.lineWidth = 0.5 / scale
+    ctx.beginPath()
+    for (let x = startX; x <= endX; x += MINOR) {
+      if (x % GRID_STEP !== 0) { ctx.moveTo(x, startY); ctx.lineTo(x, endY) }
+    }
+    for (let y = startY; y <= endY; y += MINOR) {
+      if (y % GRID_STEP !== 0) { ctx.moveTo(startX, y); ctx.lineTo(endX, y) }
+    }
+    ctx.stroke()
+
+    // Pass 2: major lines every 20px (thicker, more visible)
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)'
     ctx.lineWidth = 1 / scale
     ctx.beginPath()
     for (let x = startX; x <= endX; x += GRID_STEP) {
@@ -97,8 +111,8 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     }
     ctx.stroke()
 
-    // Border
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)'
+    // Border — dark and prominent
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)'
     ctx.lineWidth = 2 / scale
     ctx.strokeRect(0, 0, GRID_W, GRID_H)
 
