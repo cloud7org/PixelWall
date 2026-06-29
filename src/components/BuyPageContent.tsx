@@ -513,6 +513,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
 
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
       if (e.code === 'Space' && !spaceRef.current) {
         spaceRef.current = true
         e.preventDefault()
