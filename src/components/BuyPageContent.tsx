@@ -47,11 +47,12 @@ function hitTestSel(lx: number, ly: number, sel: Sel, scale: number): Handle | '
 }
 
 function applyResize(handle: Handle, start: Sel, gdx: number, gdy: number, snap: (v: number) => number): Sel {
+  const s10 = (v: number) => Math.max(10, Math.round(v / 10) * 10)
   let { x, y, w, h } = start
-  if (handle.includes('e'))  w = Math.max(10, snap(start.w + gdx))
-  if (handle.includes('s'))  h = Math.max(10, snap(start.h + gdy))
-  if (handle.includes('w')) { const nw = Math.max(10, snap(start.w - gdx)); x = start.x + start.w - nw; w = nw }
-  if (handle.includes('n')) { const nh = Math.max(10, snap(start.h - gdy)); y = start.y + start.h - nh; h = nh }
+  if (handle.includes('e'))  w = s10(start.w + gdx)
+  if (handle.includes('s'))  h = s10(start.h + gdy)
+  if (handle.includes('w')) { const nw = s10(start.w - gdx); x = start.x + start.w - nw; w = nw }
+  if (handle.includes('n')) { const nh = s10(start.h - gdy); y = start.y + start.h - nh; h = nh }
   x = Math.max(0, Math.min(GRID_W - w, x))
   y = Math.max(0, Math.min(GRID_H - h, y))
   return { x, y, w: Math.min(w, GRID_W - x), h: Math.min(h, GRID_H - y) }
@@ -108,8 +109,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const [altText, setAltText]       = useState('')
   const [imageFile, setImageFile]   = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [selW, setSelW]             = useState(defaultSel.w)
-  const [selH, setSelH]             = useState(defaultSel.h)
+  const [selW, setSelW]             = useState(String(defaultSel.w))
+  const [selH, setSelH]             = useState(String(defaultSel.h))
   const [uploading, setUploading]   = useState(false)
   const [error, setError]           = useState<string | null>(null)
   const [success, setSuccess]       = useState(false)
@@ -119,8 +120,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   // Sync refs with state
   useEffect(() => {
     selRef.current = sel
-    setSelW(sel.w)
-    setSelH(sel.h)
+    setSelW(String(sel.w))
+    setSelH(String(sel.h))
   }, [sel])
   useEffect(() => { toolModeRef.current    = toolMode    }, [toolMode])
   useEffect(() => { snapEnabledRef.current = snapEnabled }, [snapEnabled])
@@ -445,8 +446,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         const newY = Math.max(0, Math.min(sgy, gy))
         setSel({
           x: newX, y: newY,
-          w: Math.min(Math.max(10, Math.abs(gx - sgx)), GRID_W - newX),
-          h: Math.min(Math.max(10, Math.abs(gy - sgy)), GRID_H - newY),
+          w: Math.min(Math.max(10, Math.round(Math.abs(gx - sgx) / 10) * 10), GRID_W - newX),
+          h: Math.min(Math.max(10, Math.round(Math.abs(gy - sgy) / 10) * 10), GRID_H - newY),
         })
         return
       }
@@ -566,12 +567,12 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   // ─── SIDEBAR SIZE INPUTS ────────────────────────────────────────────────────
 
   const applySelW = (v: number) => {
-    const w = Math.max(10, Math.min(GRID_W - sel.x, v || 10))
-    setSelW(w); setSel(s => ({ ...s, w }))
+    const w = Math.max(10, Math.min(GRID_W - sel.x, Math.round((v || 10) / 10) * 10))
+    setSelW(String(w)); setSel(s => ({ ...s, w }))
   }
   const applySelH = (v: number) => {
-    const h = Math.max(10, Math.min(GRID_H - sel.y, v || 10))
-    setSelH(h); setSel(s => ({ ...s, h }))
+    const h = Math.max(10, Math.min(GRID_H - sel.y, Math.round((v || 10) / 10) * 10))
+    setSelH(String(h)); setSel(s => ({ ...s, h }))
   }
 
   // ─── IMAGE / SUBMIT ─────────────────────────────────────────────────────────
@@ -778,12 +779,17 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
             Dokładny rozmiar (px)
           </label>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(46,230,166,0.08)', border: '1px solid rgba(46,230,166,0.25)', padding: '10px 12px', marginBottom: 10, fontSize: 11, color: '#B7B2A4', lineHeight: 1.5 }}>
+            <i className="ti ti-info-circle" style={{ color: '#2EE6A6', marginTop: 1, flexShrink: 0 }} />
+            <span>Min. 10×10 px · tylko wielokrotności 10 (np. 10, 20, 100, 250)</span>
+          </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <div style={{ flex: 1, position: 'relative' }}>
               <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#5A5C66', pointerEvents: 'none' }}>SZER</span>
               <input
                 type="number" value={selW} min={10}
-                onChange={e => applySelW(Number(e.target.value))}
+                onChange={e => setSelW(e.target.value)}
+                onBlur={e => applySelW(Number(e.target.value))}
                 style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 10px 10px 44px', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 13, outline: 'none' }}
               />
             </div>
@@ -792,7 +798,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
               <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#5A5C66', pointerEvents: 'none' }}>WYS</span>
               <input
                 type="number" value={selH} min={10}
-                onChange={e => applySelH(Number(e.target.value))}
+                onChange={e => setSelH(e.target.value)}
+                onBlur={e => applySelH(Number(e.target.value))}
                 style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 10px 10px 44px', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 13, outline: 'none' }}
               />
             </div>
