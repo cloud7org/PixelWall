@@ -13,6 +13,7 @@ export default function PixelWallClient() {
   const { isMobile } = useBreakpoint()
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
   const [buyOpen, setBuyOpen] = useState(false)
+  const [initialSel, setInitialSel] = useState<{ x: number; y: number; w: number; h: number } | undefined>(undefined)
   const [hintText, setHintText] = useState('Najedź lub kliknij blok, aby zobaczyć szczegóły')
   const [zoomPct, setZoomPct] = useState(50)
   const [externalScale, setExternalScale] = useState<number | undefined>(undefined)
@@ -46,6 +47,10 @@ export default function PixelWallClient() {
 
   const handleBlocksLoaded = useCallback((loaded: PixelBlock[]) => setBlocks(loaded), [])
   const handleNewBlock = useCallback((block: PixelBlock) => setBlocks(prev => [...prev, block]), [])
+  const handleSelectionComplete = useCallback((sel: { x: number; y: number; w: number; h: number }) => {
+    setInitialSel(sel)
+    setBuyOpen(true)
+  }, [])
   const handleZoomChange = useCallback((pct: number) => setZoomPct(pct), [])
   const handleSliderChange = useCallback((pct: number) => { setZoomPct(pct); setExternalScale(pct) }, [])
   const handleFullscreen = useCallback(() => {
@@ -129,6 +134,8 @@ export default function PixelWallClient() {
           externalScale={externalScale}
           reinitKey={Number(isMobile)}
           showHint={!buyOpen}
+          isMobile={isMobile}
+          onSelectionComplete={handleSelectionComplete}
         />
       </div>
 
@@ -194,7 +201,10 @@ export default function PixelWallClient() {
               Ładowanie…
             </div>
           }>
-            <BuyPageContent onClose={() => setBuyOpen(false)} />
+            <BuyPageContent
+              onClose={() => { setBuyOpen(false); setInitialSel(undefined) }}
+              initialSel={initialSel}
+            />
           </Suspense>
         </div>
       )}

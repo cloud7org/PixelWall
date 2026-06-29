@@ -57,13 +57,14 @@ function applyResize(handle: Handle, start: Sel, gdx: number, gdy: number, snap:
   return { x, y, w: Math.min(w, GRID_W - x), h: Math.min(h, GRID_H - y) }
 }
 
-export default function BuyPageContent({ onClose }: { onClose?: () => void } = {}) {
+export default function BuyPageContent({ onClose, initialSel }: { onClose?: () => void; initialSel?: { x: number; y: number; w: number; h: number } } = {}) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { isMobile } = useBreakpoint()
 
   const initW = Math.max(10, Math.min(GRID_W - 10, Number(searchParams.get('w') ?? 10)))
   const initH = Math.max(10, Math.min(GRID_H - 10, Number(searchParams.get('h') ?? 10)))
+  const defaultSel = initialSel ?? { x: 50, y: 50, w: initW, h: initH }
 
   // Canvas / view refs
   const canvasRef      = useRef<HTMLCanvasElement>(null)
@@ -73,7 +74,7 @@ export default function BuyPageContent({ onClose }: { onClose?: () => void } = {
   const dprRef         = useRef(1)
   const rafRef         = useRef<number | null>(null)
   const initializedRef = useRef(false)
-  const selRef         = useRef<Sel>({ x: 50, y: 50, w: initW, h: initH })
+  const selRef         = useRef<Sel>(defaultSel)
   const isOverlapRef   = useRef(false)
 
   // Drag ref — mutated imperatively to avoid stale closures
@@ -98,7 +99,7 @@ export default function BuyPageContent({ onClose }: { onClose?: () => void } = {
   const pinchRef       = useRef<{ dist: number } | null>(null)
 
   // React state
-  const [sel, setSel]               = useState<Sel>({ x: 50, y: 50, w: initW, h: initH })
+  const [sel, setSel]               = useState<Sel>(defaultSel)
   const [toolMode, setToolMode]     = useState<ToolMode>('draw')
   const [snapEnabled, setSnapEnabled] = useState(true)
   const [zoomPct, setZoomPct]       = useState(30)
@@ -107,8 +108,8 @@ export default function BuyPageContent({ onClose }: { onClose?: () => void } = {
   const [altText, setAltText]       = useState('')
   const [imageFile, setImageFile]   = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [selW, setSelW]             = useState(initW)
-  const [selH, setSelH]             = useState(initH)
+  const [selW, setSelW]             = useState(defaultSel.w)
+  const [selH, setSelH]             = useState(defaultSel.h)
   const [uploading, setUploading]   = useState(false)
   const [error, setError]           = useState<string | null>(null)
   const [success, setSuccess]       = useState(false)
