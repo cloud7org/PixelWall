@@ -155,9 +155,9 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       ctx.strokeRect(hx, hy, hw, hh)
       ctx.setLineDash([])
       ctx.lineDashOffset = 0
-      const fs = Math.max(4, 7 / scale)
+      const fs = Math.max(8, 14 / scale)
       ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-      const lbl = 'Kliknij 2× w wolne miejsce'
+      const lbl = 'Kliknij 2 razy na wolne miejsce'
       const tw = ctx.measureText(lbl).width
       const pad = 2 / scale
       const lh = fs * 1.7
