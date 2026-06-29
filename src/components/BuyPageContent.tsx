@@ -97,7 +97,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const snapEnabledRef = useRef(true)
   const imageImgRef    = useRef<HTMLImageElement | null>(null)
   const activePtrsRef  = useRef<Map<number, { x: number; y: number }>>(new Map())
-  const pinchRef       = useRef<{ dist: number } | null>(null)
+  const pinchRef       = useRef<{ dist: number; cx: number; cy: number } | null>(null)
 
   // React state
   const [sel, setSel]               = useState<Sel>(defaultSel)
@@ -365,7 +365,12 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
 
       if (activePtrsRef.current.size === 2) {
         const [a, b] = [...activePtrsRef.current.values()]
-        pinchRef.current = { dist: Math.hypot(b.x - a.x, b.y - a.y) }
+        const rect = canvas.getBoundingClientRect()
+        pinchRef.current = {
+          dist: Math.hypot(b.x - a.x, b.y - a.y),
+          cx: (a.x + b.x) / 2 - rect.left,
+          cy: (a.y + b.y) / 2 - rect.top,
+        }
         dragRef.current.mode = 'none'
         return
       }
@@ -412,15 +417,19 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         const newDist = Math.hypot(b.x - a.x, b.y - a.y)
         const factor = newDist / pinchRef.current.dist
         const rect = canvas.getBoundingClientRect()
-        const cx = (a.x + b.x) / 2 - rect.left
-        const cy = (a.y + b.y) / 2 - rect.top
+        const newCx = (a.x + b.x) / 2 - rect.left
+        const newCy = (a.y + b.y) / 2 - rect.top
+        const prevCx = pinchRef.current.cx
+        const prevCy = pinchRef.current.cy
         const { scale, offsetX, offsetY } = viewRef.current
         const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor))
         const ratio = newScale / scale
         viewRef.current.scale   = newScale
-        viewRef.current.offsetX = cx - (cx - offsetX) * ratio
-        viewRef.current.offsetY = cy - (cy - offsetY) * ratio
+        viewRef.current.offsetX = newCx - (prevCx - offsetX) * ratio
+        viewRef.current.offsetY = newCy - (prevCy - offsetY) * ratio
         pinchRef.current.dist = newDist
+        pinchRef.current.cx = newCx
+        pinchRef.current.cy = newCy
         setZoomPct(scaleToPct(newScale))
         scheduleRedraw()
         return
