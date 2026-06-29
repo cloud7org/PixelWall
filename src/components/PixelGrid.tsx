@@ -13,7 +13,6 @@ interface Props {
   reinitKey?: number | string
   showHint?: boolean
   onSelectionComplete?: (sel: { x: number; y: number; w: number; h: number }) => void
-  isMobile?: boolean
 }
 
 const GRID_W = 1000
@@ -22,7 +21,7 @@ const GRID_STEP = 20
 const MIN_SCALE = 0.2
 const MAX_SCALE = 8
 
-export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomChange, externalScale, reinitKey, showHint, onSelectionComplete, isMobile }: Props) {
+export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomChange, externalScale, reinitKey, showHint, onSelectionComplete }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const blocksRef = useRef<PixelBlock[]>([])
   const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map())
@@ -39,14 +38,9 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   const hintRafRef       = useRef<number | null>(null)
   const hintStartRef     = useRef(0)
   const hintPosRef       = useRef<{ x: number; y: number } | null>({ x: 60, y: 60 })
-  const drawSelRef       = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
-  const isDrawingRef     = useRef(false)
-  const drawStartGridRef = useRef({ x: 0, y: 0 })
-  const spaceRef         = useRef(false)
-  const isMobileRef      = useRef(false)
+  const lastTapRef       = useRef<{ time: number; cx: number; cy: number } | null>(null)
   const onSelCompleteRef = useRef<typeof onSelectionComplete>(undefined)
   useEffect(() => { showHintRef.current = !!showHint }, [showHint])
-  useEffect(() => { isMobileRef.current = !!isMobile }, [isMobile])
   useEffect(() => { onSelCompleteRef.current = onSelectionComplete }, [onSelectionComplete])
 
   const snap = (v: number) => Math.round(v / 10) * 10
@@ -129,30 +123,8 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       }
     })
 
-    // Live selection preview (drag-to-select)
-    const ds = drawSelRef.current
-    if (ds) {
-      ctx.fillStyle = 'rgba(255,77,46,0.10)'
-      ctx.fillRect(ds.x, ds.y, ds.w, ds.h)
-      ctx.strokeStyle = '#FF4D2E'
-      ctx.lineWidth = 2 / scale
-      ctx.setLineDash([4 / scale, 4 / scale])
-      ctx.strokeRect(ds.x, ds.y, ds.w, ds.h)
-      ctx.setLineDash([])
-      const fs = Math.max(5, 10 / scale)
-      ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-      const lbl = `${ds.w} × ${ds.h} px`
-      const tw = ctx.measureText(lbl).width
-      const pad = 3 / scale, lh = fs * 1.8
-      const ly = ds.y - lh - 2 / scale
-      ctx.fillStyle = '#FF4D2E'
-      ctx.fillRect(ds.x, ly, tw + pad * 2, lh)
-      ctx.fillStyle = '#1A0A05'
-      ctx.fillText(lbl, ds.x + pad, ly + lh * 0.74)
-    }
-
-    // Animated hint rectangle (only when no active drawing)
-    if (showHintRef.current && !drawSelRef.current) {
+    // Animated hint rectangle
+    if (showHintRef.current) {
       const hp = hintPosRef.current
       if (hp) {
       const elapsed = performance.now() - hintStartRef.current
@@ -170,7 +142,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       ctx.lineDashOffset = 0
       const fs = Math.max(4, 7 / scale)
       ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-      const lbl = 'Zaznacz obszar'
+      const lbl = 'Kliknij 2× w wolne miejsce'
       const tw = ctx.measureText(lbl).width
       const pad = 2 / scale
       const lh = fs * 1.7
@@ -202,28 +174,6 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     hintRafRef.current = requestAnimationFrame(loop)
     return () => { if (hintRafRef.current !== null) { cancelAnimationFrame(hintRafRef.current); hintRafRef.current = null } }
   }, [showHint, draw, scheduleRedraw])
-
-  // Space key → pan mode
-  useEffect(() => {
-    const onDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !spaceRef.current) {
-        spaceRef.current = true
-        e.preventDefault()
-        const c = canvasRef.current
-        if (c && !isDrawingRef.current) c.style.cursor = 'grab'
-      }
-    }
-    const onUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        spaceRef.current = false
-        const c = canvasRef.current
-        if (c && !isDrawingRef.current) c.style.cursor = 'crosshair'
-      }
-    }
-    window.addEventListener('keydown', onDown)
-    window.addEventListener('keyup', onUp)
-    return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp) }
-  }, [])
 
   const resize = useCallback(() => {
     const canvas = canvasRef.current
@@ -362,44 +312,20 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     const onPointerDown = (e: PointerEvent) => {
       canvas.setPointerCapture(e.pointerId)
       activePtrsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
-
       if (activePtrsRef.current.size === 2) {
         const [a, b] = [...activePtrsRef.current.values()]
         pinchRef.current = { dist: Math.hypot(b.x - a.x, b.y - a.y) }
         isDraggingRef.current = false
-        isDrawingRef.current = false
-        drawSelRef.current = null
         return
       }
-
       dragMovedRef.current = false
       lastPtrRef.current = { x: e.clientX, y: e.clientY }
-
-      // Space / right-click → always pan
-      if (e.button === 2 || spaceRef.current) {
-        isDraggingRef.current = true
-        canvas.style.cursor = 'grabbing'
-        return
-      }
-
+      isDraggingRef.current = true
+      if (e.button === 2) { canvas.style.cursor = 'grabbing'; return }
       const rect = canvas.getBoundingClientRect()
       const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
       const hitBlock = hitTest(lx, ly)
-
-      // Mobile: always pan; also pan when starting on a block or outside grid
-      if (isMobileRef.current || hitBlock || lx < 0 || lx >= GRID_W || ly < 0 || ly >= GRID_H) {
-        isDraggingRef.current = true
-        canvas.style.cursor = 'grabbing'
-        return
-      }
-
-      // Desktop + empty grid space → draw selection
-      isDrawingRef.current = true
-      const sx = Math.max(0, Math.min(GRID_W - 10, snap(Math.round(lx))))
-      const sy = Math.max(0, Math.min(GRID_H - 10, snap(Math.round(ly))))
-      drawStartGridRef.current = { x: sx, y: sy }
-      drawSelRef.current = { x: sx, y: sy, w: 10, h: 10 }
-      canvas.style.cursor = 'crosshair'
+      canvas.style.cursor = hitBlock ? 'grabbing' : (lx >= 0 && lx < GRID_W && ly >= 0 && ly < GRID_H ? 'crosshair' : 'grabbing')
     }
 
     const onPointerMove = (e: PointerEvent) => {
@@ -428,23 +354,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       const mx = e.clientX - rect.left
       const my = e.clientY - rect.top
 
-      if (isDrawingRef.current) {
-        const { lx, ly } = toLogical(mx, my)
-        const gx = snap(Math.max(0, Math.min(GRID_W, Math.round(lx))))
-        const gy = snap(Math.max(0, Math.min(GRID_H, Math.round(ly))))
-        const { x: sx, y: sy } = drawStartGridRef.current
-        const newX = Math.min(sx, gx), newY = Math.min(sy, gy)
-        const newW = Math.max(10, Math.abs(gx - sx)), newH = Math.max(10, Math.abs(gy - sy))
-        drawSelRef.current = {
-          x: newX, y: newY,
-          w: Math.min(newW, GRID_W - newX),
-          h: Math.min(newH, GRID_H - newY),
-        }
-        const dx = e.clientX - lastPtrRef.current.x
-        const dy = e.clientY - lastPtrRef.current.y
-        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragMovedRef.current = true
-        scheduleRedraw()
-      } else if (isDraggingRef.current) {
+      if (isDraggingRef.current) {
         const dx = e.clientX - lastPtrRef.current.x
         const dy = e.clientY - lastPtrRef.current.y
         if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragMovedRef.current = true
@@ -456,51 +366,34 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
         const { lx, ly } = toLogical(mx, my)
         const hovered = hitTest(lx, ly)
         onHover(hovered)
-        if (spaceRef.current) canvas.style.cursor = 'grab'
-        else if (hovered) canvas.style.cursor = 'pointer'
-        else canvas.style.cursor = lx >= 0 && lx < GRID_W && ly >= 0 && ly < GRID_H ? 'crosshair' : 'default'
+        canvas.style.cursor = hovered ? 'pointer' : (lx >= 0 && lx < GRID_W && ly >= 0 && ly < GRID_H ? 'crosshair' : 'default')
       }
     }
 
     const onPointerUp = (e: PointerEvent) => {
       activePtrsRef.current.delete(e.pointerId)
       if (activePtrsRef.current.size < 2) pinchRef.current = null
-
-      const defaultCursor = spaceRef.current ? 'grab' : 'crosshair'
-
-      if (isDrawingRef.current) {
-        isDrawingRef.current = false
-        const ds = drawSelRef.current
-        drawSelRef.current = null
-        canvas.style.cursor = defaultCursor
-        if (dragMovedRef.current && ds) {
-          onSelCompleteRef.current?.(ds)
-        } else if (!dragMovedRef.current) {
-          // Click without move on empty space — open with small default selection
-          const rect = canvas.getBoundingClientRect()
-          const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
-          const hit = hitTest(lx, ly)
-          if (hit?.link_url) window.open(hit.link_url, '_blank', 'noopener')
-        }
-        dragMovedRef.current = false
-        scheduleRedraw()
-        return
-      }
-
       isDraggingRef.current = false
-      canvas.style.cursor = defaultCursor
-
+      canvas.style.cursor = 'crosshair'
       if (!dragMovedRef.current) {
         const rect = canvas.getBoundingClientRect()
         const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
         const hit = hitTest(lx, ly)
         if (hit?.link_url) {
           window.open(hit.link_url, '_blank', 'noopener')
-        } else if (!hit && isMobileRef.current && lx >= 0 && lx < GRID_W && ly >= 0 && ly < GRID_H) {
-          // Mobile: tap on empty space → open modal at tap position with default 100×100 selection
-          const sx = Math.max(0, Math.min(GRID_W - 100, snap(Math.round(lx))))
-          const sy = Math.max(0, Math.min(GRID_H - 100, snap(Math.round(ly))))
-          onSelCompleteRef.current?.({ x: sx, y: sy, w: 100, h: 100 })
+          lastTapRef.current = null
+        } else if (!hit && lx >= 0 && lx < GRID_W && ly >= 0 && ly < GRID_H) {
+          const now = performance.now()
+          const cx = e.clientX - rect.left, cy = e.clientY - rect.top
+          const last = lastTapRef.current
+          if (last && now - last.time < 400 && Math.hypot(cx - last.cx, cy - last.cy) < 40) {
+            lastTapRef.current = null
+            const sx = Math.max(0, Math.min(GRID_W - 10, snap(Math.round(lx))))
+            const sy = Math.max(0, Math.min(GRID_H - 10, snap(Math.round(ly))))
+            onSelCompleteRef.current?.({ x: sx, y: sy, w: 10, h: 10 })
+          } else {
+            lastTapRef.current = { time: now, cx, cy }
+          }
         }
       }
       dragMovedRef.current = false

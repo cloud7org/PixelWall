@@ -134,7 +134,6 @@ export default function PixelWallClient() {
           externalScale={externalScale}
           reinitKey={Number(isMobile)}
           showHint={!buyOpen}
-          isMobile={isMobile}
           onSelectionComplete={handleSelectionComplete}
         />
       </div>
