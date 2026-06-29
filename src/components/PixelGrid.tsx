@@ -38,6 +38,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   const showHintRef      = useRef(false)
   const hintRafRef       = useRef<number | null>(null)
   const hintStartRef     = useRef(0)
+  const hintPosRef       = useRef<{ x: number; y: number } | null>({ x: 60, y: 60 })
   const drawSelRef       = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
   const isDrawingRef     = useRef(false)
   const drawStartGridRef = useRef({ x: 0, y: 0 })
@@ -49,6 +50,19 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   useEffect(() => { onSelCompleteRef.current = onSelectionComplete }, [onSelectionComplete])
 
   const snap = (v: number) => Math.round(v / 10) * 10
+
+  const findFreeHintPos = useCallback((): { x: number; y: number } | null => {
+    const HW = 20, HH = 20
+    for (let y = 0; y <= GRID_H - HH; y += GRID_STEP) {
+      for (let x = 0; x <= GRID_W - HW; x += GRID_STEP) {
+        const free = !blocksRef.current.some(
+          b => x < b.x + b.width && x + HW > b.x && y < b.y + b.height && y + HH > b.y
+        )
+        if (free) return { x, y }
+      }
+    }
+    return null
+  }, [])
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -139,10 +153,12 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
 
     // Animated hint rectangle (only when no active drawing)
     if (showHintRef.current && !drawSelRef.current) {
+      const hp = hintPosRef.current
+      if (hp) {
       const elapsed = performance.now() - hintStartRef.current
       const pulse = (Math.sin(elapsed / 400) + 1) / 2
       const alpha = 0.35 + pulse * 0.65
-      const hx = 60, hy = 60, hw = 20, hh = 20
+      const hx = hp.x, hy = hp.y, hw = 20, hh = 20
       ctx.fillStyle = `rgba(255,77,46,${alpha * 0.12})`
       ctx.fillRect(hx, hy, hw, hh)
       ctx.setLineDash([3 / scale, 3 / scale])
@@ -163,6 +179,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       ctx.fillRect(hx, ly, tw + pad * 2, lh)
       ctx.fillStyle = '#1A0A05'
       ctx.fillText(lbl, hx + pad, ly + lh * 0.75)
+      }
     }
 
     ctx.restore()
@@ -273,6 +290,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     supabase.from('pixel_blocks').select('*').then(({ data }) => {
       if (data) {
         blocksRef.current = data as PixelBlock[]
+        hintPosRef.current = findFreeHintPos()
         onBlocksLoaded(data as PixelBlock[])
         scheduleRedraw()
       }
@@ -283,13 +301,14 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pixel_blocks' }, payload => {
         const block = payload.new as PixelBlock
         blocksRef.current = [...blocksRef.current, block]
+        hintPosRef.current = findFreeHintPos()
         onNewBlock(block)
         flashBlock(block)
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [onBlocksLoaded, onNewBlock, scheduleRedraw, flashBlock])
+  }, [onBlocksLoaded, onNewBlock, scheduleRedraw, flashBlock, findFreeHintPos])
 
   // External scale from toolbar
   useEffect(() => {
