@@ -55,36 +55,19 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop: Links + CTA */}
+        {/* Desktop: Links */}
         {!isMobile && (
-          <>
-            <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-              <Link href="/" style={{ color: '#B7B2A4', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
-                Siatka
-              </Link>
-              <Link href="/how" style={{ color: '#B7B2A4', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
-                Jak to działa
-              </Link>
-              <Link href="/owners" style={{ color: '#B7B2A4', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
-                Właściciele
-              </Link>
-            </div>
-            <Link
-              href="/buy"
-              style={{
-                background: '#FF4D2E',
-                color: '#fff',
-                fontWeight: 600,
-                fontSize: 14,
-                padding: '9px 20px',
-                borderRadius: 6,
-                textDecoration: 'none',
-                fontFamily: 'var(--font-space-grotesk), sans-serif',
-              }}
-            >
-              Kup pixele
+          <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+            <Link href="/" style={{ color: '#B7B2A4', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
+              Siatka
             </Link>
-          </>
+            <Link href="/how" style={{ color: '#B7B2A4', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
+              Jak to działa
+            </Link>
+            <Link href="/owners" style={{ color: '#B7B2A4', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
+              Właściciele
+            </Link>
+          </div>
         )}
 
         {/* Mobile: hamburger button */}
@@ -191,25 +174,6 @@ export default function Navbar() {
               </Link>
             ))}
 
-            <Link
-              href="/buy"
-              onClick={() => setMenuOpen(false)}
-              style={{
-                display: 'block',
-                marginTop: 32,
-                background: '#FF4D2E',
-                color: '#fff',
-                fontWeight: 700,
-                fontSize: 16,
-                padding: '16px 24px',
-                borderRadius: 6,
-                textDecoration: 'none',
-                fontFamily: 'var(--font-space-grotesk), sans-serif',
-                textAlign: 'center',
-              }}
-            >
-              Kup pixele
-            </Link>
           </div>
         </div>
       )}
