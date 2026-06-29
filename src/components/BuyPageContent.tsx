@@ -587,6 +587,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    if (!ownerName.trim())             { setError('Podaj nazwę właściciela.'); return }
     if (!imageFile)                    { setError('Wgraj obrazek.'); return }
     if (hasOverlap(sel.x, sel.y, sel.w, sel.h)) { setError('Ten obszar nakłada się na istniejący blok. Wybierz inne miejsce.'); return }
 
@@ -654,23 +655,6 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           ref={canvasRef}
           style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', cursor: 'crosshair', touchAction: 'none' }}
         />
-
-        {/* Floating tool buttons */}
-        <div style={{
-          position: 'absolute', top: 16, left: 16, zIndex: 5,
-          display: 'flex', gap: 4,
-          background: '#FAF8F2', border: '1px solid #E3DFD3', padding: 4,
-        }}>
-          {([
-            { mode: 'pointer' as ToolMode, icon: 'ti-pointer',    title: 'Zaznacz / przesuń' },
-            { mode: 'draw'    as ToolMode, icon: 'ti-square-plus', title: 'Rysuj nowy obszar' },
-            { mode: 'pan'     as ToolMode, icon: 'ti-hand-stop',   title: 'Przesuń widok (pan)' },
-          ] as const).map(({ mode, icon, title }) => (
-            <button key={mode} title={title} onClick={() => setToolMode(mode)} style={toolBtnSt(toolMode === mode)}>
-              <i className={`ti ${icon}`} />
-            </button>
-          ))}
-        </div>
 
         {/* Snap toggle */}
         <div
@@ -761,17 +745,26 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           <span>Przeciągnij narożniki na canvasie, by zmienić rozmiar, albo wpisz dokładne wartości poniżej — obie metody są zsynchronizowane.</span>
         </div>
 
-        {/* Live stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 }}>
-          {[
-            { label: 'POZYCJA (X, Y)', val: `${sel.x}, ${sel.y}` },
-            { label: 'ROZMIAR',        val: `${sel.w}×${sel.h}` },
-          ].map(({ label, val }) => (
-            <div key={label} style={{ background: '#1A1C24', border: '1px solid #2A2C36', padding: '12px 14px' }}>
-              <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, color: '#B7B2A4', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>{label}</span>
-              <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 16, color: '#F5F0E6' }}>{val}</span>
+        {/* Image upload */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+            Obrazek <span style={{ color: '#FF4D2E' }}>*</span>
+          </label>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(46,230,166,0.08)', border: '1px solid rgba(46,230,166,0.25)', padding: '10px 12px', marginBottom: 10, fontSize: 11, color: '#B7B2A4', lineHeight: 1.5 }}>
+            <i className="ti ti-info-circle" style={{ color: '#2EE6A6', marginTop: 1, flexShrink: 0 }} />
+            <span>Najlepsza jakość: gdy wymiary grafiki = wymiary zaznaczonego obszaru. Inne rozmiary mogą się przeskalować i stracić ostrość.</span>
+          </div>
+          <label style={{ border: '1px dashed #2A2C36', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+            <div style={{ width: 38, height: 38, background: '#1A1C24', border: '1px solid #2A2C36', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {imagePreview
+                ? <img src={imagePreview} alt="" style={{ width: 38, height: 38, objectFit: 'cover' }} />
+                : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A5C66" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>}
             </div>
-          ))}
+            <div style={{ fontSize: 13, color: '#B7B2A4' }}>
+              <b style={{ color: '#F5F0E6', fontWeight: 500 }}>{imageFile ? imageFile.name : 'Kliknij aby dodać obraz'}</b>
+            </div>
+            <input type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
+          </label>
         </div>
 
         {/* Exact size inputs */}
@@ -808,7 +801,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
 
         {/* Text fields */}
         {([
-          { id: 'owner', label: 'Nazwa właściciela', val: ownerName, set: setOwnerName, placeholder: 'np. Studio Orbit',  req: false },
+          { id: 'owner', label: 'Nazwa właściciela', val: ownerName, set: setOwnerName, placeholder: 'np. Studio Orbit',  req: true },
           { id: 'link',  label: 'Link URL',          val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false },
           { id: 'alt',   label: 'Opis obrazka (alt)',val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false },
         ] as const).map(({ id, label, val, set, placeholder, req }) => (
@@ -824,25 +817,6 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           </div>
         ))}
 
-        {/* Image upload */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-            Obrazek <span style={{ color: '#FF4D2E' }}>*</span>
-          </label>
-          <label style={{ border: '1px dashed #2A2C36', padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-            <div style={{ width: 38, height: 38, background: '#1A1C24', border: '1px solid #2A2C36', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {imagePreview
-                ? <img src={imagePreview} alt="" style={{ width: 38, height: 38, objectFit: 'cover' }} />
-                : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5A5C66" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>}
-            </div>
-            <div style={{ fontSize: 13, color: '#B7B2A4' }}>
-              <b style={{ color: '#F5F0E6', fontWeight: 500 }}>{imageFile ? imageFile.name : 'Kliknij, aby wgrać'}</b>
-              {!imageFile && <><br />dopasujemy do {sel.w}×{sel.h} px</>}
-            </div>
-            <input type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
-          </label>
-        </div>
-
         {/* Price summary */}
         <div style={{ background: '#1A1C24', border: '1px solid #2A2C36', padding: 16, marginBottom: 18 }}>
           {[
@@ -856,7 +830,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12 }}>
             <span style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 600, fontSize: 14, color: '#F5F0E6' }}>Do zapłaty</span>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 26, color: '#FFD23F' }}>{price.toLocaleString('pl-PL')} zł</span>
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 26, color: '#2EE6A6' }}>{price.toLocaleString('pl-PL')} zł</span>
           </div>
         </div>
 
@@ -876,13 +850,13 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           type="submit"
           disabled={uploading || isOverlap}
           style={{
-            width: '100%', background: uploading || isOverlap ? '#2A2C36' : '#FF4D2E',
+            width: '100%', background: uploading || isOverlap ? '#2A2C36' : '#2EE6A6',
             color: uploading || isOverlap ? '#5A5C66' : '#1A0A05',
             fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 700, fontSize: 15,
             padding: 16, border: 'none', cursor: uploading || isOverlap ? 'not-allowed' : 'pointer',
           }}
         >
-          {uploading ? 'Wgrywam…' : `Kup ${sel.w}×${sel.h} px za ${price.toLocaleString('pl-PL')} zł`}
+          {uploading ? 'Wgrywam…' : 'Dodaj'}
         </button>
       </form>
     </div>
