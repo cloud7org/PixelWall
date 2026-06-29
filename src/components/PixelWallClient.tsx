@@ -19,6 +19,10 @@ export default function PixelWallClient() {
   const [zoomPct, setZoomPct] = useState(50)
   const [externalScale, setExternalScale] = useState<number | undefined>(undefined)
 
+  const [carouselSlide, setCarouselSlide] = useState(0)
+  const [carouselFading, setCarouselFading] = useState(false)
+  const carouselTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const counterBarRef = useRef<HTMLDivElement>(null)
   const [digitW, setDigitW] = useState(24)
 
@@ -34,6 +38,21 @@ export default function PixelWallClient() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  useEffect(() => {
+    if (!isMobile) return
+    const interval = setInterval(() => {
+      setCarouselFading(true)
+      carouselTimerRef.current = setTimeout(() => {
+        setCarouselSlide(s => (s + 1) % 2)
+        setCarouselFading(false)
+      }, 400)
+    }, 3000)
+    return () => {
+      clearInterval(interval)
+      if (carouselTimerRef.current) clearTimeout(carouselTimerRef.current)
+    }
+  }, [isMobile])
 
   const soldPixels = blocks.reduce((sum, b) => sum + b.width * b.height, 0)
   const freePixels = 1_000_000 - soldPixels
@@ -86,11 +105,28 @@ export default function PixelWallClient() {
             lineHeight: 1.15,
           }}
         >
-          Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze
-          {!isMobile && (
-            <span style={{ display: 'inline-block', position: 'relative', marginLeft: 12, fontSize: '0.7em', verticalAlign: 'middle' }}>
-              <span
-                style={{
+          {isMobile ? (
+            <span style={{ opacity: carouselFading ? 0 : 1, transition: 'opacity 0.4s ease' }}>
+              {carouselSlide === 0
+                ? <>Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze</>
+                : <span style={{
+                    fontWeight: 600,
+                    background: 'linear-gradient(90deg, #b8860b 0%, #FFD23F 40%, #ffe88a 60%, #FFD23F 80%, #b8860b 100%)',
+                    backgroundSize: '200% auto',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    animation: 'goldShimmer 6s linear infinite',
+                  }}>
+                    Twoje logo na Times Square w Nowym Jorku
+                  </span>
+              }
+            </span>
+          ) : (
+            <>
+              Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze
+              <span style={{ display: 'inline-block', position: 'relative', marginLeft: 12, fontSize: '0.7em', verticalAlign: 'middle' }}>
+                <span style={{
                   fontWeight: 600,
                   background: 'linear-gradient(90deg, #b8860b 0%, #FFD23F 40%, #ffe88a 60%, #FFD23F 80%, #b8860b 100%)',
                   backgroundSize: '200% auto',
@@ -98,18 +134,18 @@ export default function PixelWallClient() {
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   animation: 'goldShimmer 6s linear infinite',
-                }}
-              >
-                — Twoje logo na Times Square w Nowym Jorku
+                }}>
+                  — Twoje logo na Times Square w Nowym Jorku
+                </span>
               </span>
-            </span>
+            </>
           )}
         </h1>
         <button
           onClick={() => setBuyOpen(true)}
           style={{
             flexShrink: 0,
-            background: '#FF4D2E',
+            background: '#2EE6A6',
             color: '#1A0A05',
             fontFamily: 'var(--font-space-grotesk), sans-serif',
             fontWeight: 700,
