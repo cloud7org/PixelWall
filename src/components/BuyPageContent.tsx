@@ -97,7 +97,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const snapEnabledRef = useRef(true)
   const imageImgRef    = useRef<HTMLImageElement | null>(null)
   const activePtrsRef  = useRef<Map<number, { x: number; y: number }>>(new Map())
-  const pinchRef       = useRef<{ dist: number; cx: number; cy: number } | null>(null)
+  const pinchRef        = useRef<{ dist: number; cx: number; cy: number } | null>(null)
+  const gestureHintRef  = useRef(true)
 
   // React state
   const [sel, setSel]               = useState<Sel>(defaultSel)
@@ -114,6 +115,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const [uploading, setUploading]   = useState(false)
   const [error, setError]           = useState<string | null>(null)
   const [success, setSuccess]       = useState(false)
+  const [showGestureHint, setShowGestureHint] = useState(true)
 
   const price = sel.w * sel.h
 
@@ -336,6 +338,17 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     return () => ro.disconnect()
   }, [scheduleRedraw, isMobile])
 
+  // ─── GESTURE HINT AUTO-DISMISS ────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!isMobile) return
+    const t = setTimeout(() => {
+      gestureHintRef.current = false
+      setShowGestureHint(false)
+    }, 4000)
+    return () => clearTimeout(t)
+  }, [isMobile])
+
   // ─── POINTER + WHEEL ───────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -359,6 +372,11 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     }
 
     const onPointerDown = (e: PointerEvent) => {
+      if (gestureHintRef.current) {
+        gestureHintRef.current = false
+        setShowGestureHint(false)
+        return
+      }
       e.preventDefault()
       canvas.setPointerCapture(e.pointerId)
       activePtrsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
@@ -669,6 +687,38 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           ref={canvasRef}
           style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', cursor: 'crosshair', touchAction: 'none' }}
         />
+
+        {/* Gesture hint overlay (mobile only) */}
+        {isMobile && showGestureHint && (
+          <div
+            onPointerDown={() => { gestureHintRef.current = false; setShowGestureHint(false) }}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 10,
+              background: 'rgba(11,12,16,0.82)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '0 28px',
+              fontFamily: 'var(--font-jetbrains-mono), monospace',
+            }}
+          >
+            <p style={{ color: '#2EE6A6', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 18px' }}>
+              GESTY TOUCH
+            </p>
+            {([
+              ['1 palec',            'zaznacz obszar'],
+              ['2 palce — rozsuń',   'przybliż'],
+              ['2 palce — zbliż',    'oddal'],
+              ['2 palce — przesuń',  'nawiguj po siatce'],
+              ['1 palec na obrazie', 'przesuń grafikę'],
+            ] as const).map(([gesture, action]) => (
+              <div key={gesture} style={{ display: 'flex', width: '100%', gap: 8, marginBottom: 10, alignItems: 'baseline' }}>
+                <span style={{ color: '#F5F0E6', fontSize: 11, flexShrink: 0, minWidth: 148 }}>{gesture}</span>
+                <span style={{ color: '#5A5C66', fontSize: 11 }}>→</span>
+                <span style={{ color: '#B7B2A4', fontSize: 11 }}>{action}</span>
+              </div>
+            ))}
+            <p style={{ color: '#5A5C66', fontSize: 10, margin: '18px 0 0' }}>dotknij aby zamknąć</p>
+          </div>
+        )}
 
         {/* Snap toggle */}
         <div
