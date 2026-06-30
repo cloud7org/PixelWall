@@ -682,7 +682,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     <div style={{ height: '100%', display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
 
       {/* ── LEFT: canvas workspace ── */}
-      <div style={{ flex: isMobile ? 'none' : 1, height: isMobile ? '45vh' : undefined, position: 'relative', background: '#E8E4DC', overflow: 'hidden' }}>
+      <div style={{ flex: isMobile ? 'none' : 1, height: isMobile ? '65vh' : undefined, position: 'relative', background: '#E8E4DC', overflow: 'hidden' }}>
         <canvas
           ref={canvasRef}
           style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', cursor: 'crosshair', touchAction: 'none' }}
@@ -807,28 +807,26 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           display: 'flex', flexDirection: 'column',
         }}
       >
-        {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            title="Zamknij"
-            style={{
-              alignSelf: 'flex-end', marginBottom: 12,
-              background: 'transparent', border: '1px solid #2A2C36',
-              color: '#B7B2A4', width: 32, height: 32,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', fontSize: 20, flexShrink: 0, lineHeight: 1,
-            }}
-          >
-            ×
-          </button>
-        )}
-        <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.08em', color: '#FF4D2E', textTransform: 'uppercase', marginBottom: 10, display: 'block' }}>
-          Zakup pikseli
-        </span>
-        <h2 style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 700, fontSize: 22, color: '#F5F0E6', marginBottom: 20, letterSpacing: '-0.01em' }}>
-          Twój obszar
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <h2 style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 700, fontSize: 22, color: '#F5F0E6', margin: 0, letterSpacing: '-0.01em' }}>
+            Dodaj obraz
+          </h2>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              title="Zamknij"
+              style={{
+                background: 'transparent', border: '1px solid #2A2C36',
+                color: '#B7B2A4', width: 32, height: 32,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', fontSize: 20, flexShrink: 0, lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
 
         {/* Hint banner */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(46,230,166,0.08)', border: '1px solid rgba(46,230,166,0.25)', padding: '12px 14px', marginBottom: 20, fontSize: 12, color: '#B7B2A4', lineHeight: 1.5 }}>
