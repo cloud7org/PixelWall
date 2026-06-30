@@ -700,6 +700,19 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
               fontFamily: 'var(--font-jetbrains-mono), monospace',
             }}
           >
+            <button
+              onPointerDown={e => { e.stopPropagation(); gestureHintRef.current = false; setShowGestureHint(false) }}
+              style={{
+                position: 'absolute', top: 12, right: 12,
+                width: 28, height: 28, border: '1px solid #3A3C46',
+                background: 'transparent', color: '#8A8676',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', padding: 0, fontSize: 16, lineHeight: 1,
+              }}
+              aria-label="Zamknij"
+            >
+              ✕
+            </button>
             <p style={{ color: '#2EE6A6', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 18px' }}>
               GESTY TOUCH
             </p>
@@ -716,24 +729,38 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
                 <span style={{ color: '#B7B2A4', fontSize: 11 }}>{action}</span>
               </div>
             ))}
-            <p style={{ color: '#5A5C66', fontSize: 10, margin: '18px 0 0' }}>dotknij aby zamknąć</p>
           </div>
         )}
 
-        {/* Snap toggle */}
-        <div
-          onClick={() => setSnapEnabled(v => !v)}
-          style={{
-            position: 'absolute', top: 16, right: 16, zIndex: 5,
-            display: 'flex', alignItems: 'center', gap: 8,
-            background: '#FAF8F2', border: '1px solid #E3DFD3', padding: '7px 12px',
-            fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#8A8676',
-            cursor: 'pointer', userSelect: 'none',
-          }}
-        >
-          <span>SNAP DO SIATKI</span>
-          <div style={{ width: 30, height: 16, background: snapEnabled ? '#2EE6A6' : '#2A2C36', borderRadius: 9, position: 'relative', transition: 'background .15s', flexShrink: 0 }}>
-            <div style={{ position: 'absolute', top: 2, left: snapEnabled ? 16 : 2, width: 12, height: 12, background: '#fff', borderRadius: '50%', transition: 'left .15s' }} />
+        {/* Snap toggle + help button */}
+        <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 5, display: 'flex', gap: 6, alignItems: 'center' }}>
+          {isMobile && (
+            <button
+              onClick={() => { gestureHintRef.current = true; setShowGestureHint(true) }}
+              title="Instrukcje gestów"
+              style={{
+                width: 32, height: 32, border: '1px solid #E3DFD3', background: '#FAF8F2',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#8A8676', cursor: 'pointer', padding: 0, flexShrink: 0,
+                fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 14, fontWeight: 600,
+              }}
+            >
+              ?
+            </button>
+          )}
+          <div
+            onClick={() => setSnapEnabled(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: '#FAF8F2', border: '1px solid #E3DFD3', padding: '7px 12px',
+              fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#8A8676',
+              cursor: 'pointer', userSelect: 'none',
+            }}
+          >
+            <span>SNAP DO SIATKI</span>
+            <div style={{ width: 30, height: 16, background: snapEnabled ? '#2EE6A6' : '#2A2C36', borderRadius: 9, position: 'relative', transition: 'background .15s', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 2, left: snapEnabled ? 16 : 2, width: 12, height: 12, background: '#fff', borderRadius: '50%', transition: 'left .15s' }} />
+            </div>
           </div>
         </div>
 
