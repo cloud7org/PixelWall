@@ -30,8 +30,8 @@ const HANDLE_CURSORS: Record<Handle, string> = {
 }
 const HANDLE_NAMES: Handle[] = ['nw','n','ne','w','e','sw','s','se']
 
-function hitTestSel(lx: number, ly: number, sel: Sel, scale: number): Handle | 'body' | null {
-  const r = 10 / scale
+function hitTestSel(lx: number, ly: number, sel: Sel, scale: number, touchPx = 10): Handle | 'body' | null {
+  const r = touchPx / scale
   const { x, y, w, h } = sel
   const cx = x + w / 2, cy = y + h / 2
   const pts: [Handle, number, number][] = [
@@ -388,8 +388,10 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         return
       }
 
-      if (toolModeRef.current === 'pointer') {
-        const hit = hitTestSel(lx, ly, selRef.current, viewRef.current.scale)
+      const touchPx = e.pointerType === 'touch' ? 24 : 10
+      const hit = hitTestSel(lx, ly, selRef.current, viewRef.current.scale, touchPx)
+
+      if (toolModeRef.current === 'pointer' || hit) {
         if (hit && hit !== 'body') {
           dragRef.current.mode = hit
           canvas.style.cursor  = HANDLE_CURSORS[hit]
@@ -401,7 +403,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           canvas.style.cursor  = 'crosshair'
         }
       } else {
-        // draw tool
+        // draw tool + pudło w zaznaczenie → rysuj nowe zaznaczenie
         dragRef.current.mode = 'draw'
         const gx = snap(Math.max(0, Math.min(GRID_W - 10, Math.round(lx))))
         const gy = snap(Math.max(0, Math.min(GRID_H - 10, Math.round(ly))))
