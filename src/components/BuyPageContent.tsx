@@ -372,6 +372,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           cy: (a.y + b.y) / 2 - rect.top,
         }
         dragRef.current.mode = 'none'
+        setSel({ ...dragRef.current.startSel })
         return
       }
 
