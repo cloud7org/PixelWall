@@ -23,6 +23,7 @@ export default function PixelWallClient() {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
   const [dragSel, setDragSel] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const [sheetFile, setSheetFile] = useState<File | null>(null)
+  const [sheetImageUrl, setSheetImageUrl] = useState<string | null>(null)
   const [tooltip, setTooltip] = useState<PixelBlock | null>(null)
   const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -34,11 +35,18 @@ export default function PixelWallClient() {
   const counterBarRef = useRef<HTMLDivElement>(null)
   const [digitW, setDigitW] = useState(24)
 
+  // Create/revoke object URL for the selected file
+  useEffect(() => {
+    if (!sheetFile) { setSheetImageUrl(null); return }
+    const url = URL.createObjectURL(sheetFile)
+    setSheetImageUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [sheetFile])
+
   useEffect(() => {
     const el = counterBarRef.current
     if (!el) return
     const calc = () => {
-      // overhead: 24px padding + 32px flex gaps + 1px separator + 24px inter-digit gaps (6*2 per counter * 2)
       setDigitW(Math.min(24, Math.max(10, Math.floor((el.offsetWidth - 81) / 14))))
     }
     calc()
@@ -119,14 +127,14 @@ export default function PixelWallClient() {
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0B0C10' }}>
       <Navbar />
 
-      {/* Headline */}
+      {/* Headline — hidden when bottom sheet is active */}
       <div
         style={{
           padding: isMobile ? '10px 16px' : '14px 32px',
           background: '#0B0C10',
           borderBottom: '1px solid #1F212B',
           flexShrink: 0,
-          display: 'flex',
+          display: bottomSheetOpen ? 'none' : 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
@@ -211,6 +219,9 @@ export default function PixelWallClient() {
           showHint={!buyOpen && !bottomSheetOpen}
           onDragSelectComplete={handleDragSelectComplete}
           onBlockClick={handleBlockClick}
+          draftSel={bottomSheetOpen ? dragSel ?? undefined : undefined}
+          draftImageUrl={bottomSheetOpen && sheetImageUrl ? sheetImageUrl : undefined}
+          onSelChange={setDragSel}
         />
       </div>
 
@@ -270,11 +281,12 @@ export default function PixelWallClient() {
         onChange={handleFileInputChange}
       />
 
-      {/* Mobile bottom sheet (after drag-select + file pick) */}
-      {bottomSheetOpen && dragSel && sheetFile && (
+      {/* Mobile bottom sheet (30vh, grid remains interactive above) */}
+      {bottomSheetOpen && dragSel && sheetImageUrl && (
         <BuyBottomSheet
           sel={dragSel}
-          file={sheetFile}
+          file={sheetFile!}
+          imageUrl={sheetImageUrl}
           onClose={handleBottomSheetClose}
           onSuccess={handleBottomSheetSuccess}
         />

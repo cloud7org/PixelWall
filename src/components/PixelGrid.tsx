@@ -15,6 +15,9 @@ interface Props {
   showHint?: boolean
   onDragSelectComplete?: (sel: { x: number; y: number; w: number; h: number }) => void
   onBlockClick?: (block: PixelBlock) => void
+  draftSel?: { x: number; y: number; w: number; h: number }
+  draftImageUrl?: string
+  onSelChange?: (sel: { x: number; y: number; w: number; h: number }) => void
 }
 
 const GRID_W = 1000
@@ -23,7 +26,12 @@ const GRID_STEP = 20
 const MIN_SCALE = 0.2
 const MAX_SCALE = 8
 
-export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomChange, externalScale, reinitKey, fetchKey, showHint, onDragSelectComplete, onBlockClick }: Props) {
+export default function PixelGrid({
+  onHover, onBlocksLoaded, onNewBlock, onZoomChange,
+  externalScale, reinitKey, fetchKey, showHint,
+  onDragSelectComplete, onBlockClick,
+  draftSel, draftImageUrl, onSelChange,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const blocksRef = useRef<PixelBlock[]>([])
   const imagesRef = useRef<Map<string, HTMLImageElement>>(new Map())
@@ -35,20 +43,33 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
   const dprRef = useRef(1)
   const initializedRef = useRef(false)
   const activePtrsRef = useRef<Map<number, { x: number; y: number }>>(new Map())
-  const pinchRef      = useRef<{ dist: number } | null>(null)
-  const showHintRef      = useRef(false)
-  const hintRafRef       = useRef<number | null>(null)
-  const hintStartRef     = useRef(0)
-  const hintPosRef       = useRef<{ x: number; y: number } | null>({ x: 60, y: 60 })
-  const lastTapRef       = useRef<{ time: number; cx: number; cy: number } | null>(null)
-  const drawSelRef       = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
-  const isDrawingRef     = useRef(false)
+  const pinchRef = useRef<{ dist: number; cx: number; cy: number } | null>(null)
+  const showHintRef = useRef(false)
+  const hintRafRef = useRef<number | null>(null)
+  const hintStartRef = useRef(0)
+  const hintPosRef = useRef<{ x: number; y: number } | null>({ x: 60, y: 60 })
+  const lastTapRef = useRef<{ time: number; cx: number; cy: number } | null>(null)
+  const drawSelRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
+  const isDrawingRef = useRef(false)
   const drawStartGridRef = useRef<{ x: number; y: number } | null>(null)
   const onDragSelCompleteRef = useRef<typeof onDragSelectComplete>(undefined)
-  const onBlockClickRef      = useRef<typeof onBlockClick>(undefined)
+  const onBlockClickRef = useRef<typeof onBlockClick>(undefined)
+  // Draft image refs
+  const draftSelRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
+  const draftImgRef = useRef<HTMLImageElement | null>(null)
+  const draftDragRef = useRef<{
+    mode: 'move' | 'nw' | 'ne' | 'sw' | 'se'
+    startGridX: number
+    startGridY: number
+    startSel: { x: number; y: number; w: number; h: number }
+  } | null>(null)
+  const onSelChangeRef = useRef<typeof onSelChange>(undefined)
+
   useEffect(() => { showHintRef.current = !!showHint }, [showHint])
   useEffect(() => { onDragSelCompleteRef.current = onDragSelectComplete }, [onDragSelectComplete])
   useEffect(() => { onBlockClickRef.current = onBlockClick }, [onBlockClick])
+  useEffect(() => { draftSelRef.current = draftSel ?? null }, [draftSel])
+  useEffect(() => { onSelChangeRef.current = onSelChange }, [onSelChange])
 
   const snap = (v: number) => Math.round(v / 10) * 10
 
@@ -93,7 +114,6 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     const endX   = Math.min(GRID_W, startX + Math.ceil(cssW / scale / MINOR + 2) * MINOR)
     const endY   = Math.min(GRID_H, startY + Math.ceil(cssH / scale / MINOR + 2) * MINOR)
 
-    // Pass 1: minor lines every 10px (thin, faint)
     ctx.strokeStyle = 'rgba(0,0,0,0.07)'
     ctx.lineWidth = 0.5 / scale
     ctx.beginPath()
@@ -105,7 +125,6 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     }
     ctx.stroke()
 
-    // Pass 2: major lines every 20px (thicker, more visible)
     ctx.strokeStyle = 'rgba(0,0,0,0.15)'
     ctx.lineWidth = 1 / scale
     ctx.beginPath()
@@ -117,12 +136,11 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     }
     ctx.stroke()
 
-    // Border — dark and prominent
     ctx.strokeStyle = 'rgba(0,0,0,0.45)'
     ctx.lineWidth = 2 / scale
     ctx.strokeRect(0, 0, GRID_W, GRID_H)
 
-    // Blocks
+    // Existing blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#1A1C24']
     blocksRef.current.forEach(block => {
       const img = imagesRef.current.get(block.id)
@@ -144,34 +162,82 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       }
     })
 
+    // Draft image overlay (bottom sheet edit mode)
+    if (draftSelRef.current) {
+      const ds = draftSelRef.current
+      const di = draftImgRef.current
+      if (di && di.complete && di.naturalWidth > 0) {
+        ctx.globalAlpha = 0.85
+        ctx.drawImage(di, ds.x, ds.y, ds.w, ds.h)
+        ctx.globalAlpha = 1
+      } else {
+        ctx.fillStyle = 'rgba(255,77,46,0.18)'
+        ctx.fillRect(ds.x, ds.y, ds.w, ds.h)
+      }
+      ctx.strokeStyle = '#FF4D2E'
+      ctx.lineWidth = 2 / scale
+      ctx.setLineDash([4 / scale, 4 / scale])
+      ctx.strokeRect(ds.x, ds.y, ds.w, ds.h)
+      ctx.setLineDash([])
+      // Corner resize handles
+      const HR = 8 / scale
+      const corners = [
+        { gx: ds.x, gy: ds.y },
+        { gx: ds.x + ds.w, gy: ds.y },
+        { gx: ds.x, gy: ds.y + ds.h },
+        { gx: ds.x + ds.w, gy: ds.y + ds.h },
+      ]
+      corners.forEach(({ gx, gy }) => {
+        ctx.beginPath()
+        ctx.arc(gx, gy, HR, 0, Math.PI * 2)
+        ctx.fillStyle = '#FF4D2E'
+        ctx.fill()
+        ctx.strokeStyle = '#FAF8F2'
+        ctx.lineWidth = 1.5 / scale
+        ctx.stroke()
+      })
+      // Size label
+      const fs = Math.max(8, 12 / scale)
+      ctx.font = `bold ${fs}px JetBrains Mono, monospace`
+      const lbl = `${ds.w} × ${ds.h}`
+      const tw = ctx.measureText(lbl).width
+      const pad = 4 / scale
+      const lh = fs * 1.8
+      const ly = ds.y - lh - 2 / scale
+      ctx.fillStyle = '#FF4D2E'
+      ctx.fillRect(ds.x, ly, tw + pad * 2, lh)
+      ctx.fillStyle = '#1A0A05'
+      ctx.fillText(lbl, ds.x + pad, ly + lh * 0.75)
+    }
+
     // Animated hint rectangle
     if (showHintRef.current) {
       const hp = hintPosRef.current
       if (hp) {
-      const elapsed = performance.now() - hintStartRef.current
-      const pulse = (Math.sin(elapsed / 400) + 1) / 2
-      const alpha = 0.35 + pulse * 0.65
-      const hx = hp.x, hy = hp.y, hw = 40, hh = 40
-      ctx.fillStyle = `rgba(255,77,46,${alpha * 0.12})`
-      ctx.fillRect(hx, hy, hw, hh)
-      ctx.setLineDash([3 / scale, 3 / scale])
-      ctx.lineDashOffset = -(elapsed / 80) % (6 / scale)
-      ctx.strokeStyle = `rgba(255,77,46,${alpha})`
-      ctx.lineWidth = 2 / scale
-      ctx.strokeRect(hx, hy, hw, hh)
-      ctx.setLineDash([])
-      ctx.lineDashOffset = 0
-      const fs = Math.max(8, 14 / scale)
-      ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-      const lbl = 'Przeciągnij palcem, aby wybrać obszar'
-      const tw = ctx.measureText(lbl).width
-      const pad = 2 / scale
-      const lh = fs * 1.7
-      const ly = hy - lh - 1 / scale
-      ctx.fillStyle = `rgba(255,77,46,${alpha * 0.9})`
-      ctx.fillRect(hx, ly, tw + pad * 2, lh)
-      ctx.fillStyle = '#1A0A05'
-      ctx.fillText(lbl, hx + pad, ly + lh * 0.75)
+        const elapsed = performance.now() - hintStartRef.current
+        const pulse = (Math.sin(elapsed / 400) + 1) / 2
+        const alpha = 0.35 + pulse * 0.65
+        const hx = hp.x, hy = hp.y, hw = 40, hh = 40
+        ctx.fillStyle = `rgba(255,77,46,${alpha * 0.12})`
+        ctx.fillRect(hx, hy, hw, hh)
+        ctx.setLineDash([3 / scale, 3 / scale])
+        ctx.lineDashOffset = -(elapsed / 80) % (6 / scale)
+        ctx.strokeStyle = `rgba(255,77,46,${alpha})`
+        ctx.lineWidth = 2 / scale
+        ctx.strokeRect(hx, hy, hw, hh)
+        ctx.setLineDash([])
+        ctx.lineDashOffset = 0
+        const fs = Math.max(8, 14 / scale)
+        ctx.font = `bold ${fs}px JetBrains Mono, monospace`
+        const lbl = 'Przeciągnij palcem, aby wybrać obszar'
+        const tw = ctx.measureText(lbl).width
+        const pad = 2 / scale
+        const lh = fs * 1.7
+        const ly = hy - lh - 1 / scale
+        ctx.fillStyle = `rgba(255,77,46,${alpha * 0.9})`
+        ctx.fillRect(hx, ly, tw + pad * 2, lh)
+        ctx.fillStyle = '#1A0A05'
+        ctx.fillText(lbl, hx + pad, ly + lh * 0.75)
       }
     }
 
@@ -205,6 +271,15 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(() => { draw(); rafRef.current = null })
   }, [draw])
+
+  // Load draft image when URL changes
+  useEffect(() => {
+    if (!draftImageUrl) { draftImgRef.current = null; return }
+    const img = new Image()
+    img.onload = () => scheduleRedraw()
+    img.src = draftImageUrl
+    draftImgRef.current = img
+  }, [draftImageUrl, scheduleRedraw])
 
   // Continuous animation loop for the hint pulse
   useEffect(() => {
@@ -305,7 +380,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     return () => { supabase.removeChannel(channel) }
   }, [onBlocksLoaded, onNewBlock, scheduleRedraw, flashBlock, findFreeHintPos])
 
-  // Re-fetch blocks when fetchKey changes (fallback for when realtime misses the INSERT)
+  // Re-fetch blocks when fetchKey changes
   useEffect(() => {
     if (fetchKey === undefined) return
     supabase.from('pixel_blocks').select('*').then(({ data }) => {
@@ -346,7 +421,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     return () => ro.disconnect()
   }, [resize, reinitKey])
 
-  // Mouse/wheel handlers
+  // Pointer + wheel handlers
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -372,15 +447,23 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       activePtrsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
 
       if (activePtrsRef.current.size === 2) {
-        // Cancel any in-progress touch draw when second finger lands
+        // Cancel draw/draft drag when second finger lands
         if (isDrawingRef.current) {
           isDrawingRef.current = false
           drawSelRef.current = null
           drawStartGridRef.current = null
           scheduleRedraw()
         }
+        draftDragRef.current = null
         const [a, b] = [...activePtrsRef.current.values()]
-        pinchRef.current = { dist: Math.hypot(b.x - a.x, b.y - a.y) }
+        const rect = canvas.getBoundingClientRect()
+        const midX = (a.x + b.x) / 2 - rect.left
+        const midY = (a.y + b.y) / 2 - rect.top
+        pinchRef.current = {
+          dist: Math.hypot(b.x - a.x, b.y - a.y),
+          cx: midX,
+          cy: midY,
+        }
         isDraggingRef.current = false
         return
       }
@@ -391,13 +474,49 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       if (e.pointerType === 'touch') {
         const rect = canvas.getBoundingClientRect()
         const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
+        const { scale } = viewRef.current
+
+        // Draft mode: check corner handles then body
+        const ds = draftSelRef.current
+        if (ds) {
+          const HIT = 24 / scale
+          const corners: { id: 'nw' | 'ne' | 'sw' | 'se'; gx: number; gy: number }[] = [
+            { id: 'nw', gx: ds.x, gy: ds.y },
+            { id: 'ne', gx: ds.x + ds.w, gy: ds.y },
+            { id: 'sw', gx: ds.x, gy: ds.y + ds.h },
+            { id: 'se', gx: ds.x + ds.w, gy: ds.y + ds.h },
+          ]
+          for (const h of corners) {
+            if (Math.hypot(lx - h.gx, ly - h.gy) < HIT) {
+              draftDragRef.current = {
+                mode: h.id,
+                startGridX: snap(Math.round(lx)),
+                startGridY: snap(Math.round(ly)),
+                startSel: { ...ds },
+              }
+              return
+            }
+          }
+          if (lx >= ds.x && lx <= ds.x + ds.w && ly >= ds.y && ly <= ds.y + ds.h) {
+            draftDragRef.current = {
+              mode: 'move',
+              startGridX: snap(Math.round(lx)),
+              startGridY: snap(Math.round(ly)),
+              startSel: { ...ds },
+            }
+            return
+          }
+          // Outside draft: pan
+          isDraggingRef.current = true
+          return
+        }
+
         const hitBlock = hitTest(lx, ly)
         if (hitBlock || lx < 0 || lx >= GRID_W || ly < 0 || ly >= GRID_H) {
-          // Touch on a block or outside grid: pan
           isDraggingRef.current = true
           isDrawingRef.current = false
         } else {
-          // Touch on empty grid interior: start draw mode
+          // Empty grid interior: draw mode
           isDrawingRef.current = true
           isDraggingRef.current = false
           const sx = Math.max(0, Math.min(GRID_W - 10, snap(Math.round(lx))))
@@ -407,7 +526,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
           canvas.style.cursor = 'crosshair'
         }
       } else {
-        // Mouse / stylus: existing pan behavior
+        // Mouse: pan
         isDraggingRef.current = true
         isDrawingRef.current = false
         if (e.button === 2) { canvas.style.cursor = 'grabbing'; return }
@@ -421,6 +540,7 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
     const onPointerMove = (e: PointerEvent) => {
       activePtrsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
 
+      // Two-finger pinch + pan
       if (activePtrsRef.current.size === 2 && pinchRef.current) {
         const [a, b] = [...activePtrsRef.current.values()]
         const newDist = Math.hypot(b.x - a.x, b.y - a.y)
@@ -431,11 +551,53 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
         const { scale, offsetX, offsetY } = viewRef.current
         const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor))
         const ratio = newScale / scale
-        viewRef.current.scale   = newScale
-        viewRef.current.offsetX = cx - (cx - offsetX) * ratio
-        viewRef.current.offsetY = cy - (cy - offsetY) * ratio
+        // Combined zoom + pan: anchor the grid point under the PREVIOUS midpoint to the CURRENT midpoint
+        viewRef.current.scale = newScale
+        viewRef.current.offsetX = cx - (pinchRef.current.cx - offsetX) * ratio
+        viewRef.current.offsetY = cy - (pinchRef.current.cy - offsetY) * ratio
         pinchRef.current.dist = newDist
+        pinchRef.current.cx = cx
+        pinchRef.current.cy = cy
         onZoomChange(Math.round(((newScale - MIN_SCALE) / (MAX_SCALE * 0.2 - MIN_SCALE)) * 100))
+        scheduleRedraw()
+        return
+      }
+
+      // Draft image move/resize
+      if (draftDragRef.current) {
+        const rect = canvas.getBoundingClientRect()
+        const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
+        const { mode, startGridX, startGridY, startSel } = draftDragRef.current
+        const dx = snap(Math.round(lx)) - startGridX
+        const dy = snap(Math.round(ly)) - startGridY
+        let ns = { ...startSel }
+        if (mode === 'move') {
+          ns.x = Math.max(0, Math.min(GRID_W - startSel.w, snap(startSel.x + dx)))
+          ns.y = Math.max(0, Math.min(GRID_H - startSel.h, snap(startSel.y + dy)))
+        } else if (mode === 'se') {
+          ns.w = Math.max(10, Math.min(GRID_W - startSel.x, snap(startSel.w + dx)))
+          ns.h = Math.max(10, Math.min(GRID_H - startSel.y, snap(startSel.h + dy)))
+        } else if (mode === 'nw') {
+          const nx = Math.max(0, Math.min(startSel.x + startSel.w - 10, snap(startSel.x + dx)))
+          const ny = Math.max(0, Math.min(startSel.y + startSel.h - 10, snap(startSel.y + dy)))
+          ns = { x: nx, y: ny, w: startSel.x + startSel.w - nx, h: startSel.y + startSel.h - ny }
+        } else if (mode === 'ne') {
+          const ny = Math.max(0, Math.min(startSel.y + startSel.h - 10, snap(startSel.y + dy)))
+          ns = {
+            x: startSel.x, y: ny,
+            w: Math.max(10, Math.min(GRID_W - startSel.x, snap(startSel.w + dx))),
+            h: startSel.y + startSel.h - ny,
+          }
+        } else if (mode === 'sw') {
+          const nx = Math.max(0, Math.min(startSel.x + startSel.w - 10, snap(startSel.x + dx)))
+          ns = {
+            x: nx, y: startSel.y,
+            w: startSel.x + startSel.w - nx,
+            h: Math.max(10, Math.min(GRID_H - startSel.y, snap(startSel.h + dy))),
+          }
+        }
+        draftSelRef.current = ns
+        onSelChangeRef.current?.(ns)
         scheduleRedraw()
         return
       }
@@ -486,6 +648,12 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
       activePtrsRef.current.delete(e.pointerId)
       if (activePtrsRef.current.size < 2) pinchRef.current = null
 
+      // Finalize draft drag
+      if (draftDragRef.current) {
+        draftDragRef.current = null
+        return
+      }
+
       // Finalize touch draw mode
       if (isDrawingRef.current) {
         isDrawingRef.current = false
@@ -508,10 +676,9 @@ export default function PixelGrid({ onHover, onBlocksLoaded, onNewBlock, onZoomC
         const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
         const hit = hitTest(lx, ly)
         if (hit) {
-          // Block click: show tooltip (all devices)
           onBlockClickRef.current?.(hit)
         } else if (e.pointerType !== 'touch' && lx >= 0 && lx < GRID_W && ly >= 0 && ly < GRID_H) {
-          // Desktop double-tap on empty area → open add-photo flow
+          // Desktop double-click on empty area
           const now = performance.now()
           const cx = e.clientX - rect.left, cy = e.clientY - rect.top
           const last = lastTapRef.current
