@@ -7,6 +7,10 @@ import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
+function safeHref(url: string) {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
 export default function OwnersPage() {
   const { isMobile } = useBreakpoint()
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
@@ -16,9 +20,11 @@ export default function OwnersPage() {
     supabase
       .from('pixel_blocks')
       .select('*')
-      .order('created_at', { ascending: false })
       .then(({ data }) => {
-        setBlocks((data as PixelBlock[]) ?? [])
+        const sorted = ((data as PixelBlock[]) ?? []).sort(
+          (a, b) => b.width * b.height - a.width * a.height
+        )
+        setBlocks(sorted)
         setLoading(false)
       })
   }, [])
@@ -49,10 +55,18 @@ export default function OwnersPage() {
               fontSize: 'clamp(24px, 3vw, 36px)',
               letterSpacing: '-0.02em',
               color: '#F5F0E6',
+              marginBottom: 8,
             }}
           >
-            Właściciele pixeli
+            Ranking właścicieli
           </h1>
+          <p style={{
+            fontFamily: 'var(--font-jetbrains-mono), monospace',
+            fontSize: 13,
+            color: '#5A5C66',
+          }}>
+            Sprawdź kto króluje w pixelowej lidze
+          </p>
         </div>
 
         {loading ? (
@@ -88,108 +102,124 @@ export default function OwnersPage() {
             }}
           >
             <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
-              <thead>
-                <tr style={{ background: '#14151B', borderBottom: '1px solid #1F212B' }}>
-                  {['Podgląd', 'Właściciel', 'Rozmiar', 'Piksele', 'Cena', 'Link', 'Data'].map(h => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        fontFamily: 'var(--font-jetbrains-mono), monospace',
-                        fontSize: 11,
-                        letterSpacing: '0.07em',
-                        color: '#B7B2A4',
-                        textTransform: 'uppercase',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {blocks.map((block, i) => (
-                  <tr
-                    key={block.id}
-                    style={{
-                      borderBottom: i < blocks.length - 1 ? '1px solid #1F212B' : 'none',
-                      background: i % 2 === 0 ? '#0B0C10' : '#0E0F14',
-                    }}
-                  >
-                    <td style={{ padding: '12px 16px' }}>
-                      <img
-                        src={block.image_url}
-                        alt={block.alt_text ?? ''}
-                        width={40}
-                        height={40}
-                        style={{ objectFit: 'cover', border: '1px solid #2A2C36', borderRadius: 4 }}
-                      />
-                    </td>
-                    <td style={{ padding: '12px 16px', color: '#F5F0E6', fontSize: 14 }}>
-                      {block.owner_name ?? 'Anonimowy'}
-                    </td>
-                    <td
-                      style={{
-                        padding: '12px 16px',
-                        fontFamily: 'var(--font-jetbrains-mono), monospace',
-                        fontSize: 12,
-                        color: '#B7B2A4',
-                      }}
-                    >
-                      {block.width}×{block.height}
-                    </td>
-                    <td
-                      style={{
-                        padding: '12px 16px',
-                        fontFamily: 'var(--font-jetbrains-mono), monospace',
-                        fontSize: 13,
-                        color: '#2EE6A6',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {(block.width * block.height).toLocaleString('pl-PL')}
-                    </td>
-                    <td
-                      style={{
-                        padding: '12px 16px',
-                        fontFamily: 'var(--font-jetbrains-mono), monospace',
-                        fontSize: 13,
-                        color: '#FFD23F',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {(block.width * block.height).toLocaleString('pl-PL')} zł
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      {block.link_url ? (
-                        <a
-                          href={block.link_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: '#FF4D2E', textDecoration: 'none', fontSize: 13 }}
-                        >
-                          {block.link_url.replace(/^https?:\/\//, '').slice(0, 28)}
-                          {block.link_url.length > 35 ? '…' : ''}
-                        </a>
-                      ) : <span style={{ color: '#54566a', fontSize: 13 }}>—</span>}
-                    </td>
-                    <td
-                      style={{
-                        padding: '12px 16px',
-                        fontFamily: 'var(--font-jetbrains-mono), monospace',
-                        fontSize: 11,
-                        color: '#5A5C66',
-                      }}
-                    >
-                      {new Date(block.created_at).toLocaleDateString('pl-PL')}
-                    </td>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
+                <thead>
+                  <tr style={{ background: '#14151B', borderBottom: '1px solid #1F212B' }}>
+                    {['Miejsce', 'Podgląd', 'Właściciel', 'Rozmiar', 'Piksele', 'Cena', 'Link', 'Data'].map(h => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: '12px 16px',
+                          textAlign: 'left',
+                          fontFamily: 'var(--font-jetbrains-mono), monospace',
+                          fontSize: 11,
+                          letterSpacing: '0.07em',
+                          color: '#B7B2A4',
+                          textTransform: 'uppercase',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {blocks.map((block, i) => {
+                    const isFirst = i === 0
+                    return (
+                      <tr
+                        key={block.id}
+                        style={{
+                          borderBottom: i < blocks.length - 1 ? '1px solid #1F212B' : 'none',
+                          background: isFirst
+                            ? 'rgba(255,210,63,0.07)'
+                            : i % 2 === 0 ? '#0B0C10' : '#0E0F14',
+                          borderLeft: isFirst ? '3px solid #FFD23F' : '3px solid transparent',
+                        }}
+                      >
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{
+                            fontFamily: 'var(--font-jetbrains-mono), monospace',
+                            fontSize: isFirst ? 18 : 13,
+                            fontWeight: 700,
+                            color: isFirst ? '#FFD23F' : '#5A5C66',
+                          }}>
+                            {isFirst ? '🥇' : `${i + 1}.`}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <img
+                            src={block.image_url}
+                            alt={block.alt_text ?? ''}
+                            width={40}
+                            height={40}
+                            style={{ objectFit: 'cover', border: `1px solid ${isFirst ? '#FFD23F' : '#2A2C36'}`, borderRadius: 4 }}
+                          />
+                        </td>
+                        <td style={{ padding: '12px 16px', color: isFirst ? '#FFD23F' : '#F5F0E6', fontSize: 14, fontWeight: isFirst ? 700 : 400 }}>
+                          {block.owner_name ?? 'Anonimowy'}
+                        </td>
+                        <td
+                          style={{
+                            padding: '12px 16px',
+                            fontFamily: 'var(--font-jetbrains-mono), monospace',
+                            fontSize: 12,
+                            color: '#B7B2A4',
+                          }}
+                        >
+                          {block.width}×{block.height}
+                        </td>
+                        <td
+                          style={{
+                            padding: '12px 16px',
+                            fontFamily: 'var(--font-jetbrains-mono), monospace',
+                            fontSize: 13,
+                            color: '#2EE6A6',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {(block.width * block.height).toLocaleString('pl-PL')}
+                        </td>
+                        <td
+                          style={{
+                            padding: '12px 16px',
+                            fontFamily: 'var(--font-jetbrains-mono), monospace',
+                            fontSize: 13,
+                            color: '#FFD23F',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {(block.width * block.height).toLocaleString('pl-PL')} zł
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {block.link_url ? (
+                            <a
+                              href={safeHref(block.link_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: '#FF4D2E', textDecoration: 'none', fontSize: 13 }}
+                            >
+                              {block.link_url.replace(/^https?:\/\//, '').slice(0, 28)}
+                              {block.link_url.length > 35 ? '…' : ''}
+                            </a>
+                          ) : <span style={{ color: '#54566a', fontSize: 13 }}>—</span>}
+                        </td>
+                        <td
+                          style={{
+                            padding: '12px 16px',
+                            fontFamily: 'var(--font-jetbrains-mono), monospace',
+                            fontSize: 11,
+                            color: '#5A5C66',
+                          }}
+                        >
+                          {new Date(block.created_at).toLocaleDateString('pl-PL')}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
