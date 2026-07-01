@@ -16,7 +16,6 @@ export default function PixelWallClient() {
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
   const [buyOpen, setBuyOpen] = useState(false)
   const [fetchKey, setFetchKey] = useState<number | undefined>(undefined)
-  const [hintText, setHintText] = useState('Najedź lub kliknij blok, aby zobaczyć szczegóły')
   const [zoomPct, setZoomPct] = useState(50)
   const [externalScale, setExternalScale] = useState<number | undefined>(undefined)
 
@@ -54,13 +53,7 @@ export default function PixelWallClient() {
   const soldPixels = blocks.reduce((sum, b) => sum + b.width * b.height, 0)
   const freePixels = 1_000_000 - soldPixels
 
-  const handleHover = useCallback((block: PixelBlock | null) => {
-    setHintText(
-      block
-        ? `${block.owner_name ?? 'Anonimowy'} · ${block.width}×${block.height} px · ${(block.width * block.height).toLocaleString('pl-PL')} zł`
-        : 'Najedź na siatkę, aby zobaczyć podgląd'
-    )
-  }, [])
+  const handleHover = useCallback((_: PixelBlock | null) => {}, [])
 
   const handleBlocksLoaded = useCallback((loaded: PixelBlock[]) => setBlocks(loaded), [])
   const handleNewBlock = useCallback((block: PixelBlock) => setBlocks(prev => [...prev, block]), [])
@@ -128,7 +121,6 @@ export default function PixelWallClient() {
       </div>
 
       <CanvasToolbar
-        hintText={hintText}
         zoomPct={zoomPct}
         onZoomChange={handleSliderChange}
         onFullscreen={handleFullscreen}

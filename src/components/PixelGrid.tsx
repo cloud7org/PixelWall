@@ -52,6 +52,7 @@ export default function PixelGrid({
   const drawSelRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
   const isDrawingRef = useRef(false)
   const drawStartGridRef = useRef<{ x: number; y: number } | null>(null)
+  const drawSelOverlapRef = useRef(false)
   const onDragSelCompleteRef = useRef<typeof onDragSelectComplete>(undefined)
   const onBlockClickRef = useRef<typeof onBlockClick>(undefined)
   // Draft image refs
@@ -244,21 +245,23 @@ export default function PixelGrid({
     // Draw-mode selection rectangle (touch drag)
     if (drawSelRef.current) {
       const ds = drawSelRef.current
-      ctx.fillStyle = 'rgba(255,77,46,0.12)'
+      const overlaps = drawSelOverlapRef.current
+      const selColor = overlaps ? '#FF8C00' : '#FF4D2E'
+      ctx.fillStyle = overlaps ? 'rgba(255,140,0,0.15)' : 'rgba(255,77,46,0.12)'
       ctx.fillRect(ds.x, ds.y, ds.w, ds.h)
       ctx.setLineDash([4 / scale, 4 / scale])
-      ctx.strokeStyle = '#FF4D2E'
+      ctx.strokeStyle = selColor
       ctx.lineWidth = 2 / scale
       ctx.strokeRect(ds.x, ds.y, ds.w, ds.h)
       ctx.setLineDash([])
       const fs = Math.max(8, 12 / scale)
       ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-      const lbl = `${ds.w} × ${ds.h}`
+      const lbl = overlaps ? 'Zajęty obszar' : `${ds.w} × ${ds.h}`
       const tw = ctx.measureText(lbl).width
       const pad = 4 / scale
       const lh = fs * 1.8
       const ly = ds.y - lh - 2 / scale
-      ctx.fillStyle = '#FF4D2E'
+      ctx.fillStyle = selColor
       ctx.fillRect(ds.x, ly, tw + pad * 2, lh)
       ctx.fillStyle = '#1A0A05'
       ctx.fillText(lbl, ds.x + pad, ly + lh * 0.75)
@@ -425,6 +428,12 @@ export default function PixelGrid({
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+
+    const overlapsBlock = (sel: { x: number; y: number; w: number; h: number }) =>
+      blocksRef.current.some(
+        b => sel.x < b.x + b.width && sel.x + sel.w > b.x &&
+             sel.y < b.y + b.height && sel.y + sel.h > b.y
+      )
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
@@ -613,12 +622,14 @@ export default function PixelGrid({
         const newY = Math.min(start.y, gy)
         const newW = Math.max(10, Math.round(Math.abs(gx - start.x) / 10) * 10)
         const newH = Math.max(10, Math.round(Math.abs(gy - start.y) / 10) * 10)
-        drawSelRef.current = {
+        const newSel = {
           x: newX,
           y: newY,
           w: Math.min(newW, GRID_W - newX),
           h: Math.min(newH, GRID_H - newY),
         }
+        drawSelRef.current = newSel
+        drawSelOverlapRef.current = overlapsBlock(newSel)
         dragMovedRef.current = true
         scheduleRedraw()
         return
@@ -658,10 +669,12 @@ export default function PixelGrid({
       if (isDrawingRef.current) {
         isDrawingRef.current = false
         const ds = drawSelRef.current
+        const overlapped = drawSelOverlapRef.current
         drawSelRef.current = null
+        drawSelOverlapRef.current = false
         drawStartGridRef.current = null
         scheduleRedraw()
-        if (ds && dragMovedRef.current && ds.w >= 10 && ds.h >= 10) {
+        if (ds && dragMovedRef.current && ds.w >= 10 && ds.h >= 10 && !overlapped) {
           onDragSelCompleteRef.current?.(ds)
         }
         dragMovedRef.current = false
