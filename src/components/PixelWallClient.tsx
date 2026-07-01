@@ -6,6 +6,8 @@ import PixelGrid from './PixelGrid'
 import CanvasToolbar from './CanvasToolbar'
 import PixelCounter from './PixelCounter'
 import BuyPageContent from './BuyPageContent'
+import BuyBottomSheet from './BuyBottomSheet'
+import BlockTooltip from './BlockTooltip'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
@@ -13,11 +15,17 @@ export default function PixelWallClient() {
   const { isMobile } = useBreakpoint()
   const [blocks, setBlocks] = useState<PixelBlock[]>([])
   const [buyOpen, setBuyOpen] = useState(false)
-  const [initialSel, setInitialSel] = useState<{ x: number; y: number; w: number; h: number } | undefined>(undefined)
   const [fetchKey, setFetchKey] = useState<number | undefined>(undefined)
   const [hintText, setHintText] = useState('Najedź lub kliknij blok, aby zobaczyć szczegóły')
   const [zoomPct, setZoomPct] = useState(50)
   const [externalScale, setExternalScale] = useState<number | undefined>(undefined)
+
+  const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
+  const [dragSel, setDragSel] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
+  const [sheetFile, setSheetFile] = useState<File | null>(null)
+  const [tooltip, setTooltip] = useState<PixelBlock | null>(null)
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [carouselSlide, setCarouselSlide] = useState(0)
   const [carouselFading, setCarouselFading] = useState(false)
@@ -67,10 +75,39 @@ export default function PixelWallClient() {
 
   const handleBlocksLoaded = useCallback((loaded: PixelBlock[]) => setBlocks(loaded), [])
   const handleNewBlock = useCallback((block: PixelBlock) => setBlocks(prev => [...prev, block]), [])
-  const handleSelectionComplete = useCallback((sel: { x: number; y: number; w: number; h: number }) => {
-    setInitialSel(sel)
-    setBuyOpen(true)
+
+  const handleDragSelectComplete = useCallback((sel: { x: number; y: number; w: number; h: number }) => {
+    setDragSel(sel)
+    fileInputRef.current?.click()
   }, [])
+
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) { setDragSel(null); return }
+    setSheetFile(file)
+    setBottomSheetOpen(true)
+  }, [])
+
+  const handleBlockClick = useCallback((block: PixelBlock) => {
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current)
+    setTooltip(block)
+    tooltipTimerRef.current = setTimeout(() => setTooltip(null), 3500)
+  }, [])
+
+  const handleBottomSheetClose = useCallback(() => {
+    setBottomSheetOpen(false)
+    setSheetFile(null)
+    setDragSel(null)
+  }, [])
+
+  const handleBottomSheetSuccess = useCallback(() => {
+    setBottomSheetOpen(false)
+    setSheetFile(null)
+    setDragSel(null)
+    setFetchKey(k => (k ?? 0) + 1)
+  }, [])
+
   const handleZoomChange = useCallback((pct: number) => setZoomPct(pct), [])
   const handleSliderChange = useCallback((pct: number) => { setZoomPct(pct); setExternalScale(pct) }, [])
   const handleFullscreen = useCallback(() => {
@@ -171,8 +208,9 @@ export default function PixelWallClient() {
           externalScale={externalScale}
           reinitKey={Number(isMobile)}
           fetchKey={fetchKey}
-          showHint={!buyOpen}
-          onSelectionComplete={handleSelectionComplete}
+          showHint={!buyOpen && !bottomSheetOpen}
+          onDragSelectComplete={handleDragSelectComplete}
+          onBlockClick={handleBlockClick}
         />
       </div>
 
@@ -223,7 +261,37 @@ export default function PixelWallClient() {
         )}
       </div>
 
-      {/* Buy modal overlay */}
+      {/* Hidden file input for mobile drag-select flow */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileInputChange}
+      />
+
+      {/* Mobile bottom sheet (after drag-select + file pick) */}
+      {bottomSheetOpen && dragSel && sheetFile && (
+        <BuyBottomSheet
+          sel={dragSel}
+          file={sheetFile}
+          onClose={handleBottomSheetClose}
+          onSuccess={handleBottomSheetSuccess}
+        />
+      )}
+
+      {/* Block info tooltip */}
+      {tooltip && (
+        <BlockTooltip
+          block={tooltip}
+          onClose={() => {
+            if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current)
+            setTooltip(null)
+          }}
+        />
+      )}
+
+      {/* Buy modal overlay (opened via "+ Dodaj obraz" button) */}
       {buyOpen && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 200,
@@ -239,8 +307,7 @@ export default function PixelWallClient() {
             </div>
           }>
             <BuyPageContent
-              onClose={() => { setBuyOpen(false); setInitialSel(undefined); setFetchKey(k => (k ?? 0) + 1) }}
-              initialSel={initialSel}
+              onClose={() => { setBuyOpen(false); setFetchKey(k => (k ?? 0) + 1) }}
             />
           </Suspense>
         </div>
