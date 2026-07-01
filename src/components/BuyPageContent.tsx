@@ -889,7 +889,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         {([
           { id: 'owner', label: 'Nazwa właściciela',          val: ownerName, set: setOwnerName, placeholder: 'Nazwa',              req: true,  type: 'text'  },
           { id: 'email', label: 'Adres e-mail',               val: email,     set: setEmail,     placeholder: 'email@gmail.com',    req: true,  type: 'email' },
-          { id: 'link',  label: 'Link URL (strona, blog, etc)', val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false, type: 'url'   },
+          { id: 'link',  label: 'Link URL (strona, blog, etc)', val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false, type: 'text'  },
           { id: 'alt',   label: 'Opis obrazka',               val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false, type: 'text'  },
         ] as const).map(({ id, label, val, set, placeholder, req, type }) => (
           <div key={id} style={{ marginBottom: 16 }}>

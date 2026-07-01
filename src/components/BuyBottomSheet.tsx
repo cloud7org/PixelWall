@@ -219,7 +219,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
             <div style={{ flex: '1 1 120px', minWidth: 0 }}>
               <label style={labelStyle}>Link</label>
               <input
-                type="url"
+                type="text"
                 value={linkUrl}
                 onChange={e => setLinkUrl(e.target.value)}
                 placeholder="https://..."

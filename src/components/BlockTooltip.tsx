@@ -65,7 +65,7 @@ export default function BlockTooltip({ block, onClose }: Props) {
         )}
         {block.link_url && (
           <a
-            href={block.link_url}
+            href={/^https?:\/\//i.test(block.link_url!) ? block.link_url! : `https://${block.link_url}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
