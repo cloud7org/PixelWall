@@ -20,8 +20,8 @@ interface Props {
   onSelChange?: (sel: { x: number; y: number; w: number; h: number }) => void
 }
 
-const GRID_W = 1000
-const GRID_H = 1000
+const CENTRAL_W = 1000
+const CENTRAL_H = 1000
 const GRID_STEP = 20
 const MIN_SCALE = 0.2
 const MAX_SCALE = 8
@@ -76,8 +76,8 @@ export default function PixelGrid({
 
   const findFreeHintPos = useCallback((): { x: number; y: number } | null => {
     const HW = 40, HH = 40
-    for (let y = 0; y <= GRID_H - HH; y += GRID_STEP) {
-      for (let x = 0; x <= GRID_W - HW; x += GRID_STEP) {
+    for (let y = 0; y <= CENTRAL_H - HH; y += GRID_STEP) {
+      for (let x = 0; x <= CENTRAL_W - HW; x += GRID_STEP) {
         const free = !blocksRef.current.some(
           b => x < b.x + b.width && x + HW > b.x && y < b.y + b.height && y + HH > b.y
         )
@@ -110,10 +110,10 @@ export default function PixelGrid({
 
     // Grid lines — millimeter paper style
     const MINOR = 10
-    const startX = Math.max(0, Math.floor(-offsetX / scale / MINOR) * MINOR)
-    const startY = Math.max(0, Math.floor(-offsetY / scale / MINOR) * MINOR)
-    const endX   = Math.min(GRID_W, startX + Math.ceil(cssW / scale / MINOR + 2) * MINOR)
-    const endY   = Math.min(GRID_H, startY + Math.ceil(cssH / scale / MINOR + 2) * MINOR)
+    const startX = Math.floor(-offsetX / scale / MINOR) * MINOR
+    const startY = Math.floor(-offsetY / scale / MINOR) * MINOR
+    const endX   = startX + Math.ceil(cssW / scale / MINOR + 2) * MINOR
+    const endY   = startY + Math.ceil(cssH / scale / MINOR + 2) * MINOR
 
     ctx.strokeStyle = 'rgba(0,0,0,0.07)'
     ctx.lineWidth = 0.5 / scale
@@ -139,7 +139,7 @@ export default function PixelGrid({
 
     ctx.strokeStyle = 'rgba(0,0,0,0.45)'
     ctx.lineWidth = 2 / scale
-    ctx.strokeRect(0, 0, GRID_W, GRID_H)
+    ctx.strokeRect(0, 0, CENTRAL_W, CENTRAL_H)
 
     // Existing blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#1A1C24']
@@ -309,10 +309,10 @@ export default function PixelGrid({
       initializedRef.current = true
       const cssW = canvas.offsetWidth
       const cssH = canvas.offsetHeight
-      const fitScale = Math.min(cssW / GRID_W, cssH / GRID_H)
+      const fitScale = Math.min(cssW / CENTRAL_W, cssH / CENTRAL_H)
       viewRef.current.scale = fitScale
-      viewRef.current.offsetX = Math.round((cssW - GRID_W * fitScale) / 2)
-      viewRef.current.offsetY = Math.round((cssH - GRID_H * fitScale) / 2)
+      viewRef.current.offsetX = Math.round((cssW - CENTRAL_W * fitScale) / 2)
+      viewRef.current.offsetY = Math.round((cssH - CENTRAL_H * fitScale) / 2)
     }
 
     scheduleRedraw()
@@ -324,7 +324,6 @@ export default function PixelGrid({
   }
 
   const hitTest = (lx: number, ly: number): PixelBlock | null => {
-    if (lx < 0 || lx >= GRID_W || ly < 0 || ly >= GRID_H) return null
     for (let i = blocksRef.current.length - 1; i >= 0; i--) {
       const b = blocksRef.current[i]
       if (lx >= b.x && lx < b.x + b.width && ly >= b.y && ly < b.y + b.height) return b
@@ -521,15 +520,15 @@ export default function PixelGrid({
         }
 
         const hitBlock = hitTest(lx, ly)
-        if (hitBlock || lx < 0 || lx >= GRID_W || ly < 0 || ly >= GRID_H) {
+        if (hitBlock) {
           isDraggingRef.current = true
           isDrawingRef.current = false
         } else {
-          // Empty grid interior: draw mode
+          // Empty area: draw mode
           isDrawingRef.current = true
           isDraggingRef.current = false
-          const sx = Math.max(0, Math.min(GRID_W - 10, snap(Math.round(lx))))
-          const sy = Math.max(0, Math.min(GRID_H - 10, snap(Math.round(ly))))
+          const sx = snap(Math.round(lx))
+          const sy = snap(Math.round(ly))
           drawStartGridRef.current = { x: sx, y: sy }
           drawSelRef.current = { x: sx, y: sy, w: 10, h: 10 }
           canvas.style.cursor = 'crosshair'
@@ -542,7 +541,7 @@ export default function PixelGrid({
         const rect = canvas.getBoundingClientRect()
         const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
         const hitBlock = hitTest(lx, ly)
-        canvas.style.cursor = hitBlock ? 'grabbing' : (lx >= 0 && lx < GRID_W && ly >= 0 && ly < GRID_H ? 'crosshair' : 'grabbing')
+        canvas.style.cursor = hitBlock ? 'grabbing' : 'crosshair'
       }
     }
 
@@ -581,28 +580,28 @@ export default function PixelGrid({
         const dy = snap(Math.round(ly)) - startGridY
         let ns = { ...startSel }
         if (mode === 'move') {
-          ns.x = Math.max(0, Math.min(GRID_W - startSel.w, snap(startSel.x + dx)))
-          ns.y = Math.max(0, Math.min(GRID_H - startSel.h, snap(startSel.y + dy)))
+          ns.x = snap(startSel.x + dx)
+          ns.y = snap(startSel.y + dy)
         } else if (mode === 'se') {
-          ns.w = Math.max(10, Math.min(GRID_W - startSel.x, snap(startSel.w + dx)))
-          ns.h = Math.max(10, Math.min(GRID_H - startSel.y, snap(startSel.h + dy)))
+          ns.w = Math.max(10, snap(startSel.w + dx))
+          ns.h = Math.max(10, snap(startSel.h + dy))
         } else if (mode === 'nw') {
-          const nx = Math.max(0, Math.min(startSel.x + startSel.w - 10, snap(startSel.x + dx)))
-          const ny = Math.max(0, Math.min(startSel.y + startSel.h - 10, snap(startSel.y + dy)))
-          ns = { x: nx, y: ny, w: startSel.x + startSel.w - nx, h: startSel.y + startSel.h - ny }
+          const nx = snap(startSel.x + dx)
+          const ny = snap(startSel.y + dy)
+          ns = { x: nx, y: ny, w: Math.max(10, startSel.x + startSel.w - nx), h: Math.max(10, startSel.y + startSel.h - ny) }
         } else if (mode === 'ne') {
-          const ny = Math.max(0, Math.min(startSel.y + startSel.h - 10, snap(startSel.y + dy)))
+          const ny = snap(startSel.y + dy)
           ns = {
             x: startSel.x, y: ny,
-            w: Math.max(10, Math.min(GRID_W - startSel.x, snap(startSel.w + dx))),
-            h: startSel.y + startSel.h - ny,
+            w: Math.max(10, snap(startSel.w + dx)),
+            h: Math.max(10, startSel.y + startSel.h - ny),
           }
         } else if (mode === 'sw') {
-          const nx = Math.max(0, Math.min(startSel.x + startSel.w - 10, snap(startSel.x + dx)))
+          const nx = snap(startSel.x + dx)
           ns = {
             x: nx, y: startSel.y,
-            w: startSel.x + startSel.w - nx,
-            h: Math.max(10, Math.min(GRID_H - startSel.y, snap(startSel.h + dy))),
+            w: Math.max(10, startSel.x + startSel.w - nx),
+            h: Math.max(10, snap(startSel.h + dy)),
           }
         }
         draftSelRef.current = ns
@@ -616,18 +615,13 @@ export default function PixelGrid({
         const rect = canvas.getBoundingClientRect()
         const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
         const start = drawStartGridRef.current
-        const gx = Math.max(0, Math.min(GRID_W, snap(Math.round(lx))))
-        const gy = Math.max(0, Math.min(GRID_H, snap(Math.round(ly))))
+        const gx = snap(Math.round(lx))
+        const gy = snap(Math.round(ly))
         const newX = Math.min(start.x, gx)
         const newY = Math.min(start.y, gy)
         const newW = Math.max(10, Math.round(Math.abs(gx - start.x) / 10) * 10)
         const newH = Math.max(10, Math.round(Math.abs(gy - start.y) / 10) * 10)
-        const newSel = {
-          x: newX,
-          y: newY,
-          w: Math.min(newW, GRID_W - newX),
-          h: Math.min(newH, GRID_H - newY),
-        }
+        const newSel = { x: newX, y: newY, w: newW, h: newH }
         drawSelRef.current = newSel
         drawSelOverlapRef.current = overlapsBlock(newSel)
         dragMovedRef.current = true
@@ -651,7 +645,7 @@ export default function PixelGrid({
         const { lx, ly } = toLogical(mx, my)
         const hovered = hitTest(lx, ly)
         onHover(hovered)
-        canvas.style.cursor = hovered ? 'pointer' : (lx >= 0 && lx < GRID_W && ly >= 0 && ly < GRID_H ? 'crosshair' : 'default')
+        canvas.style.cursor = hovered ? 'pointer' : 'crosshair'
       }
     }
 
@@ -690,15 +684,15 @@ export default function PixelGrid({
         const hit = hitTest(lx, ly)
         if (hit) {
           onBlockClickRef.current?.(hit)
-        } else if (e.pointerType !== 'touch' && lx >= 0 && lx < GRID_W && ly >= 0 && ly < GRID_H) {
+        } else if (e.pointerType !== 'touch') {
           // Desktop double-click on empty area
           const now = performance.now()
           const cx = e.clientX - rect.left, cy = e.clientY - rect.top
           const last = lastTapRef.current
           if (last && now - last.time < 400 && Math.hypot(cx - last.cx, cy - last.cy) < 40) {
             lastTapRef.current = null
-            const sx = Math.max(0, Math.min(GRID_W - 10, snap(Math.round(lx))))
-            const sy = Math.max(0, Math.min(GRID_H - 10, snap(Math.round(ly))))
+            const sx = snap(Math.round(lx))
+            const sy = snap(Math.round(ly))
             onDragSelCompleteRef.current?.({ x: sx, y: sy, w: 10, h: 10 })
           } else {
             lastTapRef.current = { time: now, cx, cy }

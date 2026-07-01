@@ -51,7 +51,6 @@ export default function PixelWallClient() {
   }, [])
 
   const soldPixels = blocks.reduce((sum, b) => sum + b.width * b.height, 0)
-  const freePixels = 1_000_000 - soldPixels
 
   const handleHover = useCallback((_: PixelBlock | null) => {}, [])
 
@@ -147,23 +146,6 @@ export default function PixelWallClient() {
           <PixelCounter value={soldPixels} color="red" digitWidth={digitW} />
         </div>
 
-        <div style={{ width: 1, height: 36, background: '#2A2C36' }} />
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, letterSpacing: '0.1em', color: '#B7B2A4', textTransform: 'uppercase' }}>
-            Wolne
-          </span>
-          <PixelCounter value={freePixels} color="green" digitWidth={digitW} />
-        </div>
-
-        {!isMobile && (
-          <>
-            <div style={{ width: 1, height: 36, background: '#2A2C36' }} />
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#5A5C66' }}>
-              1 000 × 1 000 · 1 zł / px
-            </span>
-          </>
-        )}
       </div>
 
       {/* Hidden file input for mobile drag-select flow */}

@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
-const GRID_W    = 1000
-const GRID_H    = 1000
+const CENTRAL_W = 1000
+const CENTRAL_H = 1000
 const GRID_STEP = 20
 const MIN_SCALE = 0.08
 const MAX_SCALE = 6
@@ -53,9 +53,7 @@ function applyResize(handle: Handle, start: Sel, gdx: number, gdy: number, snap:
   if (handle.includes('s'))  h = s10(start.h + gdy)
   if (handle.includes('w')) { const nw = s10(start.w - gdx); x = start.x + start.w - nw; w = nw }
   if (handle.includes('n')) { const nh = s10(start.h - gdy); y = start.y + start.h - nh; h = nh }
-  x = Math.max(0, Math.min(GRID_W - w, x))
-  y = Math.max(0, Math.min(GRID_H - h, y))
-  return { x, y, w: Math.min(w, GRID_W - x), h: Math.min(h, GRID_H - y) }
+  return { x, y, w, h }
 }
 
 export default function BuyPageContent({ onClose, initialSel }: { onClose?: () => void; initialSel?: { x: number; y: number; w: number; h: number } } = {}) {
@@ -63,8 +61,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const router = useRouter()
   const { isMobile } = useBreakpoint()
 
-  const initW = Math.max(10, Math.min(GRID_W - 10, Number(searchParams.get('w') ?? 10)))
-  const initH = Math.max(10, Math.min(GRID_H - 10, Number(searchParams.get('h') ?? 10)))
+  const initW = Math.max(10, Number(searchParams.get('w') ?? 10))
+  const initH = Math.max(10, Number(searchParams.get('h') ?? 10))
   const defaultSel = initialSel ?? { x: 50, y: 50, w: initW, h: initH }
 
   // Canvas / view refs
@@ -149,20 +147,17 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     ctx.save()
     ctx.scale(dpr, dpr)
 
-    ctx.fillStyle = '#E8E4DC'
+    ctx.fillStyle = '#FAF8F2'
     ctx.fillRect(0, 0, cssW, cssH)
 
     ctx.translate(offsetX, offsetY)
     ctx.scale(scale, scale)
 
-    ctx.fillStyle = '#FAF8F2'
-    ctx.fillRect(0, 0, GRID_W, GRID_H)
-
     // Visible range
-    const sX = Math.max(0, Math.floor(-offsetX / scale / GRID_STEP) * GRID_STEP)
-    const sY = Math.max(0, Math.floor(-offsetY / scale / GRID_STEP) * GRID_STEP)
-    const eX = Math.min(GRID_W, sX + Math.ceil(cssW / scale / GRID_STEP + 2) * GRID_STEP)
-    const eY = Math.min(GRID_H, sY + Math.ceil(cssH / scale / GRID_STEP + 2) * GRID_STEP)
+    const sX = Math.floor(-offsetX / scale / GRID_STEP) * GRID_STEP
+    const sY = Math.floor(-offsetY / scale / GRID_STEP) * GRID_STEP
+    const eX = sX + Math.ceil(cssW / scale / GRID_STEP + 2) * GRID_STEP
+    const eY = sY + Math.ceil(cssH / scale / GRID_STEP + 2) * GRID_STEP
 
     // Minor grid (10px)
     const minor = GRID_STEP / 2
@@ -188,7 +183,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     // Grid border
     ctx.strokeStyle = 'rgba(0,0,0,0.15)'
     ctx.lineWidth = 2 / scale
-    ctx.strokeRect(0, 0, GRID_W, GRID_H)
+    ctx.strokeRect(0, 0, CENTRAL_W, CENTRAL_H)
 
     // Sold blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#1A1C24']
@@ -320,13 +315,13 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
       canvas.height = canvas.offsetHeight * dpr
       if (!initializedRef.current && canvas.offsetWidth > 0 && canvas.offsetHeight > 0) {
         initializedRef.current = true
-        const fit = Math.min(canvas.offsetWidth / GRID_W, canvas.offsetHeight / GRID_H)
+        const fit = Math.min(canvas.offsetWidth / CENTRAL_W, canvas.offsetHeight / CENTRAL_H)
         const cx = canvas.offsetWidth
         const cy = canvas.offsetHeight
         viewRef.current = {
           scale: fit,
-          offsetX: Math.round((cx - GRID_W * fit) / 2),
-          offsetY: Math.round((cy - GRID_H * fit) / 2),
+          offsetX: Math.round((cx - CENTRAL_W * fit) / 2),
+          offsetY: Math.round((cy - CENTRAL_H * fit) / 2),
         }
         setZoomPct(scaleToPct(fit))
       }
@@ -424,8 +419,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
       } else {
         // draw tool + pudło w zaznaczenie → rysuj nowe zaznaczenie
         dragRef.current.mode = 'draw'
-        const gx = snap(Math.max(0, Math.min(GRID_W - 10, Math.round(lx))))
-        const gy = snap(Math.max(0, Math.min(GRID_H - 10, Math.round(ly))))
+        const gx = snap(Math.round(lx))
+        const gy = snap(Math.round(ly))
         setSel({ x: gx, y: gy, w: 10, h: 10 })
       }
     }
@@ -468,16 +463,16 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
       }
 
       if (mode === 'draw') {
-        const gx  = snap(Math.max(0, Math.min(GRID_W, Math.round(lx))))
-        const gy  = snap(Math.max(0, Math.min(GRID_H, Math.round(ly))))
+        const gx  = snap(Math.round(lx))
+        const gy  = snap(Math.round(ly))
         const sgx = snap(Math.round(startGrid.x))
         const sgy = snap(Math.round(startGrid.y))
-        const newX = Math.max(0, Math.min(sgx, gx))
-        const newY = Math.max(0, Math.min(sgy, gy))
+        const newX = Math.min(sgx, gx)
+        const newY = Math.min(sgy, gy)
         setSel({
           x: newX, y: newY,
-          w: Math.min(Math.max(10, Math.round(Math.abs(gx - sgx) / 10) * 10), GRID_W - newX),
-          h: Math.min(Math.max(10, Math.round(Math.abs(gy - sgy) / 10) * 10), GRID_H - newY),
+          w: Math.max(10, Math.round(Math.abs(gx - sgx) / 10) * 10),
+          h: Math.max(10, Math.round(Math.abs(gy - sgy) / 10) * 10),
         })
         return
       }
@@ -487,8 +482,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         const gdy = snap(Math.round(ly - startGrid.y))
         setSel({
           ...startSel,
-          x: Math.max(0, Math.min(GRID_W - startSel.w, startSel.x + gdx)),
-          y: Math.max(0, Math.min(GRID_H - startSel.h, startSel.y + gdy)),
+          x: startSel.x + gdx,
+          y: startSel.y + gdy,
         })
         return
       }
@@ -599,11 +594,11 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   // ─── SIDEBAR SIZE INPUTS ────────────────────────────────────────────────────
 
   const applySelW = (v: number) => {
-    const w = Math.max(10, Math.min(GRID_W - sel.x, Math.round((v || 10) / 10) * 10))
+    const w = Math.max(10, Math.round((v || 10) / 10) * 10)
     setSelW(String(w)); setSel(s => ({ ...s, w }))
   }
   const applySelH = (v: number) => {
-    const h = Math.max(10, Math.min(GRID_H - sel.y, Math.round((v || 10) / 10) * 10))
+    const h = Math.max(10, Math.round((v || 10) / 10) * 10)
     setSelH(String(h)); setSel(s => ({ ...s, h }))
   }
 
