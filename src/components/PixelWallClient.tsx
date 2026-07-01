@@ -26,6 +26,7 @@ export default function PixelWallClient() {
   const [tooltip, setTooltip] = useState<PixelBlock | null>(null)
   const [showGestureHint, setShowGestureHint] = useState(false)
   const [gestureHintExiting, setGestureHintExiting] = useState(false)
+  const [resetViewKey, setResetViewKey] = useState(0)
   const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -126,8 +127,10 @@ export default function PixelWallClient() {
           onZoomChange={handleZoomChange}
           externalScale={externalScale}
           reinitKey={Number(isMobile)}
+          resetViewKey={resetViewKey}
           fetchKey={fetchKey}
           showHint={!buyOpen && !bottomSheetOpen}
+          isMobile={isMobile}
           onDragSelectComplete={handleDragSelectComplete}
           onBlockClick={handleBlockClick}
           draftSel={bottomSheetOpen ? dragSel ?? undefined : undefined}
@@ -135,25 +138,45 @@ export default function PixelWallClient() {
           onSelChange={setDragSel}
         />
 
-        {/* Ikona "?" — widoczna gdy overlay gestów jest zamknięty */}
-        {isMobile && !showGestureHint && (
-          <button
-            onClick={() => setShowGestureHint(true)}
-            title="Instrukcje gestów"
-            style={{
-              position: 'absolute', top: 12, right: 12, zIndex: 20,
-              width: 32, height: 32,
-              border: '1px solid #3A3C46',
-              background: 'rgba(11,12,16,0.70)',
-              color: '#8A8676',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', padding: 0,
-              fontFamily: 'var(--font-jetbrains-mono), monospace',
-              fontSize: 14, fontWeight: 600,
-            }}
-          >
-            ?
-          </button>
+        {/* Top-right corner buttons — visible when gesture overlay is not covering */}
+        {(!showGestureHint || gestureHintExiting) && (
+          <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 20, display: 'flex', gap: 6 }}>
+            <button
+              onClick={() => setResetViewKey(k => k + 1)}
+              title="Wróć do centrum"
+              style={{
+                height: 32, padding: '0 10px',
+                border: '1px solid #3A3C46',
+                background: 'rgba(11,12,16,0.70)',
+                color: '#8A8676',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-jetbrains-mono), monospace',
+                fontSize: 11, whiteSpace: 'nowrap',
+              }}
+            >
+              Wróć do centrum
+            </button>
+
+            {isMobile && (
+              <button
+                onClick={() => setShowGestureHint(true)}
+                title="Instrukcje gestów"
+                style={{
+                  width: 32, height: 32,
+                  border: '1px solid #3A3C46',
+                  background: 'rgba(11,12,16,0.70)',
+                  color: '#8A8676',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', padding: 0,
+                  fontFamily: 'var(--font-jetbrains-mono), monospace',
+                  fontSize: 14, fontWeight: 600,
+                }}
+              >
+                ?
+              </button>
+            )}
+          </div>
         )}
 
         {/* Overlay gestów — mobile only */}
@@ -233,9 +256,9 @@ export default function PixelWallClient() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 10, letterSpacing: '0.1em', color: '#B7B2A4', textTransform: 'uppercase' }}>
-            Sprzedane
+            Zajęte pixele
           </span>
-          <PixelCounter value={soldPixels} color="red" digitWidth={digitW} />
+          <PixelCounter value={soldPixels} color="green" digitWidth={digitW} />
         </div>
 
       </div>

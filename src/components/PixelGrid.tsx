@@ -11,8 +11,10 @@ interface Props {
   onZoomChange: (pct: number) => void
   externalScale?: number
   reinitKey?: number | string
+  resetViewKey?: number
   fetchKey?: number
   showHint?: boolean
+  isMobile?: boolean
   onDragSelectComplete?: (sel: { x: number; y: number; w: number; h: number }) => void
   onBlockClick?: (block: PixelBlock) => void
   draftSel?: { x: number; y: number; w: number; h: number }
@@ -28,7 +30,7 @@ const MAX_SCALE = 8
 
 export default function PixelGrid({
   onHover, onBlocksLoaded, onNewBlock, onZoomChange,
-  externalScale, reinitKey, fetchKey, showHint,
+  externalScale, reinitKey, resetViewKey, fetchKey, showHint, isMobile,
   onDragSelectComplete, onBlockClick,
   draftSel, draftImageUrl, onSelChange,
 }: Props) {
@@ -53,6 +55,8 @@ export default function PixelGrid({
   const isDrawingRef = useRef(false)
   const drawStartGridRef = useRef<{ x: number; y: number } | null>(null)
   const drawSelOverlapRef = useRef(false)
+  const isMobileRef = useRef(false)
+  isMobileRef.current = isMobile ?? false
   const onDragSelCompleteRef = useRef<typeof onDragSelectComplete>(undefined)
   const onBlockClickRef = useRef<typeof onBlockClick>(undefined)
   // Draft image refs
@@ -230,7 +234,7 @@ export default function PixelGrid({
         ctx.lineDashOffset = 0
         const fs = Math.max(8, 14 / scale)
         ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-        const lbl = 'Przeciągnij palcem, aby wybrać obszar'
+        const lbl = isMobileRef.current ? 'Przeciągnij palcem, aby wybrać obszar' : 'Kliknij 2 razy na wolny obszar'
         const tw = ctx.measureText(lbl).width
         const pad = 2 / scale
         const lh = fs * 1.7
@@ -422,6 +426,22 @@ export default function PixelGrid({
     ro.observe(canvas)
     return () => ro.disconnect()
   }, [resize, reinitKey])
+
+  // Reset view to default fit when resetViewKey increments
+  useEffect(() => {
+    if (!resetViewKey) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const cssW = canvas.offsetWidth
+    const cssH = canvas.offsetHeight
+    if (!cssW || !cssH) return
+    const fitScale = Math.min(cssW / CENTRAL_W, cssH / CENTRAL_H)
+    viewRef.current.scale = fitScale
+    viewRef.current.offsetX = Math.round((cssW - CENTRAL_W * fitScale) / 2)
+    viewRef.current.offsetY = Math.round((cssH - CENTRAL_H * fitScale) / 2)
+    onZoomChange(Math.round(((fitScale - MIN_SCALE) / (MAX_SCALE * 0.2 - MIN_SCALE)) * 100))
+    scheduleRedraw()
+  }, [resetViewKey, onZoomChange, scheduleRedraw])
 
   // Pointer + wheel handlers
   useEffect(() => {
