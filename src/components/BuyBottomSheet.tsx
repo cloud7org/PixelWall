@@ -115,8 +115,9 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
         left: 0,
         right: 0,
         zIndex: 300,
-        height: '30vh',
-        overflowY: 'auto',
+        maxHeight: '72vh',
+        display: 'flex',
+        flexDirection: 'column',
         background: '#0B0C10',
         borderTop: '2px solid #2A2C36',
         borderRadius: '16px 16px 0 0',
@@ -152,7 +153,9 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
           </p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} style={{ padding: '4px 16px 12px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {/* Scrollable area: header + fields */}
+          <div style={{ overflowY: 'auto', flex: 1, padding: '4px 16px 0' }}>
           {/* Header row: area info + price + close */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -240,7 +243,10 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
               />
             </div>
           </div>
+          </div>{/* end scrollable */}
 
+          {/* Sticky footer: checkbox + error + button */}
+          <div style={{ flexShrink: 0, padding: '8px 16px 12px', borderTop: '1px solid #2A2C36' }}>
           {/* Checkbox zgody */}
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', marginBottom: 10 }}>
             <input
@@ -294,6 +300,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
           >
             {uploading ? 'Wysyłam…' : 'Dodaj'}
           </button>
+          </div>{/* end sticky footer */}
         </form>
       )}
     </div>
