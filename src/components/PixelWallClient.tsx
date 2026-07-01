@@ -28,10 +28,6 @@ export default function PixelWallClient() {
   const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [carouselSlide, setCarouselSlide] = useState(0)
-  const [carouselFading, setCarouselFading] = useState(false)
-  const carouselTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   const counterBarRef = useRef<HTMLDivElement>(null)
   const [digitW, setDigitW] = useState(24)
 
@@ -54,21 +50,6 @@ export default function PixelWallClient() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-
-  useEffect(() => {
-    if (!isMobile) return
-    const interval = setInterval(() => {
-      setCarouselFading(true)
-      carouselTimerRef.current = setTimeout(() => {
-        setCarouselSlide(s => (s + 1) % 2)
-        setCarouselFading(false)
-      }, 400)
-    }, 3000)
-    return () => {
-      clearInterval(interval)
-      if (carouselTimerRef.current) clearTimeout(carouselTimerRef.current)
-    }
-  }, [isMobile])
 
   const soldPixels = blocks.reduce((sum, b) => sum + b.width * b.height, 0)
   const freePixels = 1_000_000 - soldPixels
@@ -126,85 +107,6 @@ export default function PixelWallClient() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0B0C10' }}>
       <Navbar />
-
-      {/* Headline — hidden when bottom sheet is active */}
-      <div
-        style={{
-          padding: isMobile ? '10px 16px' : '14px 32px',
-          background: '#0B0C10',
-          borderBottom: '1px solid #1F212B',
-          flexShrink: 0,
-          display: bottomSheetOpen ? 'none' : 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-        }}
-      >
-        <h1
-          style={{
-            fontFamily: 'var(--font-space-grotesk), sans-serif',
-            fontWeight: 700,
-            fontSize: 'clamp(18px, 2vw, 26px)',
-            letterSpacing: '-0.025em',
-            color: '#F5F0E6',
-            lineHeight: 1.15,
-          }}
-        >
-          {isMobile ? (
-            <span style={{ opacity: carouselFading ? 0 : 1, transition: 'opacity 0.4s ease' }}>
-              {carouselSlide === 0
-                ? <span style={{
-                    fontWeight: 600,
-                    background: 'linear-gradient(90deg, #b8860b 0%, #FFD23F 40%, #ffe88a 60%, #FFD23F 80%, #b8860b 100%)',
-                    backgroundSize: '200% auto',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    animation: 'goldShimmer 6s linear infinite',
-                  }}>
-                    Twoje logo na Times Square w Nowym Jorku
-                  </span>
-                : <>Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze</>
-              }
-            </span>
-          ) : (
-            <>
-              Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze
-              <span style={{ display: 'inline-block', position: 'relative', marginLeft: 12, fontSize: '0.7em', verticalAlign: 'middle' }}>
-                <span style={{
-                  fontWeight: 600,
-                  background: 'linear-gradient(90deg, #b8860b 0%, #FFD23F 40%, #ffe88a 60%, #FFD23F 80%, #b8860b 100%)',
-                  backgroundSize: '200% auto',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  animation: 'goldShimmer 6s linear infinite',
-                }}>
-                  — Twoje logo na Times Square w Nowym Jorku
-                </span>
-              </span>
-            </>
-          )}
-        </h1>
-        <button
-          onClick={() => setBuyOpen(true)}
-          style={{
-            flexShrink: 0,
-            background: '#2EE6A6',
-            color: '#1A0A05',
-            fontFamily: 'var(--font-space-grotesk), sans-serif',
-            fontWeight: 700,
-            fontSize: isMobile ? 13 : 15,
-            padding: isMobile ? '8px 14px' : '10px 20px',
-            border: 'none',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          + Dodaj obraz
-        </button>
-      </div>
 
       {/* Canvas */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }}>

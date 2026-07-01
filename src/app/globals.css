@@ -53,3 +53,8 @@ html, body {
   0% { background-position: 200% center; }
   100% { background-position: -200% center; }
 }
+
+@keyframes marqueeScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}

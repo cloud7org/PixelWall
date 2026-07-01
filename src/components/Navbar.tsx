@@ -4,6 +4,15 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
+const goldStyle: React.CSSProperties = {
+  background: 'linear-gradient(90deg,#b8860b 0%,#FFD23F 40%,#ffe88a 60%,#FFD23F 80%,#b8860b 100%)',
+  backgroundSize: '200% auto',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
+  animation: 'goldShimmer 6s linear infinite',
+}
+
 export default function Navbar() {
   const { isMobile } = useBreakpoint()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -14,7 +23,6 @@ export default function Navbar() {
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           padding: isMobile ? '0 16px' : '0 32px',
           height: 56,
           background: '#0B0C10',
@@ -25,7 +33,10 @@ export default function Navbar() {
         }}
       >
         {/* Logo */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        <Link
+          href="/"
+          style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}
+        >
           <div
             style={{
               width: 26,
@@ -55,9 +66,54 @@ export default function Navbar() {
           </span>
         </Link>
 
+        {/* Middle: headline text — clipped at both ends, never covers logo or nav items */}
+        {isMobile ? (
+          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', margin: '0 10px' }}>
+            <span
+              style={{
+                display: 'inline-block',
+                whiteSpace: 'nowrap',
+                animation: 'marqueeScroll 22s linear infinite',
+                fontFamily: 'var(--font-space-grotesk), sans-serif',
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              {/* Copy 1 */}
+              <span style={{ color: '#F5F0E6' }}>
+                Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze{'  '}
+              </span>
+              <span style={goldStyle}>— Twoje logo na Times Square w Nowym Jorku{'      '}</span>
+              {/* Copy 2 — seamless loop: translateX(-50%) = exactly one copy width */}
+              <span style={{ color: '#F5F0E6' }}>
+                Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze{'  '}
+              </span>
+              <span style={goldStyle}>— Twoje logo na Times Square w Nowym Jorku{'      '}</span>
+            </span>
+          </div>
+        ) : (
+          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', margin: '0 24px' }}>
+            <span
+              style={{
+                display: 'block',
+                fontFamily: 'var(--font-space-grotesk), sans-serif',
+                fontWeight: 600,
+                fontSize: 14,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                color: '#F5F0E6',
+              }}
+            >
+              Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze{' '}
+              <span style={goldStyle}>— Twoje logo na Times Square w Nowym Jorku</span>
+            </span>
+          </div>
+        )}
+
         {/* Desktop: Links */}
         {!isMobile && (
-          <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 32, alignItems: 'center', flexShrink: 0 }}>
             <Link href="/" style={{ color: '#B7B2A4', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
               Siatka
             </Link>
@@ -84,6 +140,7 @@ export default function Navbar() {
               flexDirection: 'column',
               gap: 5,
               color: '#F5F0E6',
+              flexShrink: 0,
             }}
           >
             <span style={{ display: 'block', width: 22, height: 2, background: '#F5F0E6' }} />
@@ -173,7 +230,6 @@ export default function Navbar() {
                 {label}
               </Link>
             ))}
-
           </div>
         </div>
       )}
