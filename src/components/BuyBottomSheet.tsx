@@ -18,6 +18,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   const [email, setEmail] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [altText, setAltText] = useState('')
+  const [privacyConsent, setPrivacyConsent] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -47,6 +48,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
     setError(null)
     if (!ownerName.trim()) { setError('Podaj nazwę właściciela.'); return }
     if (!email.trim()) { setError('Podaj adres e-mail.'); return }
+    if (!privacyConsent) { setError('Zaakceptuj politykę prywatności, aby kontynuować.'); return }
     if (hasOverlap()) { setError('Ten obszar nakłada się na istniejący blok. Wybierz inne miejsce.'); return }
 
     setUploading(true)
@@ -70,6 +72,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
         id, x: sel.x, y: sel.y, width: sel.w, height: sel.h,
         image_url: urlData.publicUrl, link_url: linkUrl || null,
         owner_name: ownerName || null, alt_text: altText || null, email,
+        privacy_consent: true, privacy_consent_at: new Date().toISOString(),
       })
       if (insErr) throw new Error(insErr.message)
       setSuccess(true)
@@ -238,6 +241,25 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
             </div>
           </div>
 
+          {/* Checkbox zgody */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', marginBottom: 10 }}>
+            <input
+              type="checkbox"
+              checked={privacyConsent}
+              onChange={e => setPrivacyConsent(e.target.checked)}
+              style={{ marginTop: 2, flexShrink: 0, accentColor: '#2EE6A6', width: 14, height: 14 }}
+            />
+            <span style={{ color: '#B7B2A4', fontSize: 11, fontFamily: 'var(--font-jetbrains-mono), monospace', lineHeight: 1.5 }}>
+              Akceptuję{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                style={{ color: '#2EE6A6', textDecoration: 'underline' }}>
+                politykę prywatności
+              </a>
+              , w tym zgodę na wyświetlenie mojej grafiki na Times Square po wysprzedaniu centralnego obszaru siatki (dotyczy tylko pikseli z obszaru 1000×1000 px).
+            </span>
+          </label>
+
           {error && (
             <div style={{
               color: '#FF4D2E',
@@ -255,18 +277,18 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
 
           <button
             type="submit"
-            disabled={uploading}
+            disabled={uploading || !privacyConsent}
             style={{
               width: '100%',
-              background: uploading ? '#1A1C24' : '#2EE6A6',
-              color: uploading ? '#5A5C66' : '#1A0A05',
+              background: uploading || !privacyConsent ? '#1A1C24' : '#2EE6A6',
+              color: uploading || !privacyConsent ? '#5A5C66' : '#1A0A05',
               fontFamily: 'var(--font-space-grotesk), sans-serif',
               fontWeight: 700,
               fontSize: 15,
               padding: '10px 16px',
               border: 'none',
               borderRadius: 6,
-              cursor: uploading ? 'not-allowed' : 'pointer',
+              cursor: uploading || !privacyConsent ? 'not-allowed' : 'pointer',
               transition: 'background 0.2s ease',
             }}
           >

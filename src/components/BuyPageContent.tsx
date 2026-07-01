@@ -105,6 +105,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const [zoomPct, setZoomPct]       = useState(30)
   const [ownerName, setOwnerName]   = useState('')
   const [email, setEmail]           = useState('')
+  const [privacyConsent, setPrivacyConsent] = useState(false)
   const [linkUrl, setLinkUrl]       = useState('')
   const [altText, setAltText]       = useState('')
   const [imageFile, setImageFile]   = useState<File | null>(null)
@@ -617,6 +618,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     setError(null)
     if (!ownerName.trim())             { setError('Podaj nazwę właściciela.'); return }
     if (!email.trim())                 { setError('Podaj adres e-mail.'); return }
+    if (!privacyConsent)               { setError('Zaakceptuj politykę prywatności, aby kontynuować.'); return }
     if (!imageFile)                    { setError('Wgraj obrazek.'); return }
     if (hasOverlap(sel.x, sel.y, sel.w, sel.h)) { setError('Ten obszar nakłada się na istniejący blok. Wybierz inne miejsce.'); return }
 
@@ -641,6 +643,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         id, x: sel.x, y: sel.y, width: sel.w, height: sel.h,
         image_url: urlData.publicUrl, link_url: linkUrl || null,
         owner_name: ownerName || null, alt_text: altText || null, email,
+        privacy_consent: true, privacy_consent_at: new Date().toISOString(),
       })
       if (insErr) throw new Error(insErr.message)
       setSuccess(true)
@@ -927,6 +930,24 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           </div>
         )}
 
+        {/* Checkbox zgody */}
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', marginBottom: 16 }}>
+          <input
+            type="checkbox"
+            checked={privacyConsent}
+            onChange={e => setPrivacyConsent(e.target.checked)}
+            style={{ marginTop: 3, flexShrink: 0, accentColor: '#2EE6A6', width: 14, height: 14 }}
+          />
+          <span style={{ color: '#B7B2A4', fontSize: 11, fontFamily: 'var(--font-jetbrains-mono), monospace', lineHeight: 1.6 }}>
+            Akceptuję{' '}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer"
+              style={{ color: '#2EE6A6', textDecoration: 'underline' }}>
+              politykę prywatności
+            </a>
+            , w tym zgodę na wyświetlenie mojej grafiki na Times Square po wysprzedaniu centralnego obszaru siatki (dotyczy tylko pikseli z obszaru 1000×1000 px).
+          </span>
+        </label>
+
         {isOverlap && (
           <div style={{ background: 'rgba(255,77,46,0.07)', border: '1px solid rgba(255,77,46,0.25)', padding: '10px 14px', color: '#FF4D2E', fontSize: 12, fontFamily: 'var(--font-jetbrains-mono), monospace', marginBottom: 14 }}>
             ⚠ Obszar nakłada się na istniejący blok — wybierz inne miejsce.
@@ -935,12 +956,12 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
 
         <button
           type="submit"
-          disabled={uploading || isOverlap}
+          disabled={uploading || isOverlap || !privacyConsent}
           style={{
-            width: '100%', background: uploading || isOverlap ? '#2A2C36' : '#2EE6A6',
-            color: uploading || isOverlap ? '#5A5C66' : '#1A0A05',
+            width: '100%', background: uploading || isOverlap || !privacyConsent ? '#2A2C36' : '#2EE6A6',
+            color: uploading || isOverlap || !privacyConsent ? '#5A5C66' : '#1A0A05',
             fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 700, fontSize: 15,
-            padding: 16, border: 'none', cursor: uploading || isOverlap ? 'not-allowed' : 'pointer',
+            padding: 16, border: 'none', cursor: uploading || isOverlap || !privacyConsent ? 'not-allowed' : 'pointer',
           }}
         >
           {uploading ? 'Wgrywam…' : 'Dodaj'}
