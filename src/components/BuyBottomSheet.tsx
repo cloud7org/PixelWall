@@ -15,6 +15,7 @@ interface Props {
 export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess }: Props) {
   const [visible, setVisible] = useState(false)
   const [ownerName, setOwnerName] = useState('')
+  const [email, setEmail] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [altText, setAltText] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -45,6 +46,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
     e.preventDefault()
     setError(null)
     if (!ownerName.trim()) { setError('Podaj nazwę właściciela.'); return }
+    if (!email.trim()) { setError('Podaj adres e-mail.'); return }
     if (hasOverlap()) { setError('Ten obszar nakłada się na istniejący blok. Wybierz inne miejsce.'); return }
 
     setUploading(true)
@@ -67,7 +69,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
       const { error: insErr } = await supabase.from('pixel_blocks').insert({
         id, x: sel.x, y: sel.y, width: sel.w, height: sel.h,
         image_url: urlData.publicUrl, link_url: linkUrl || null,
-        owner_name: ownerName || null, alt_text: altText || null,
+        owner_name: ownerName || null, alt_text: altText || null, email,
       })
       if (insErr) throw new Error(insErr.message)
       setSuccess(true)
@@ -198,7 +200,18 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
                 type="text"
                 value={ownerName}
                 onChange={e => setOwnerName(e.target.value)}
-                placeholder="Firma / imię"
+                placeholder="Nazwa"
+                style={inputStyle}
+                required
+              />
+            </div>
+            <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+              <label style={labelStyle}>E-mail *</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="email@gmail.com"
                 style={inputStyle}
                 required
               />
@@ -257,7 +270,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
               transition: 'background 0.2s ease',
             }}
           >
-            {uploading ? 'Wysyłam…' : `Kup piksele — ${price.toLocaleString('pl-PL')} zł`}
+            {uploading ? 'Wysyłam…' : 'Dodaj'}
           </button>
         </form>
       )}

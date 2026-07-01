@@ -104,6 +104,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const [snapEnabled, setSnapEnabled] = useState(true)
   const [zoomPct, setZoomPct]       = useState(30)
   const [ownerName, setOwnerName]   = useState('')
+  const [email, setEmail]           = useState('')
   const [linkUrl, setLinkUrl]       = useState('')
   const [altText, setAltText]       = useState('')
   const [imageFile, setImageFile]   = useState<File | null>(null)
@@ -615,6 +616,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     e.preventDefault()
     setError(null)
     if (!ownerName.trim())             { setError('Podaj nazwę właściciela.'); return }
+    if (!email.trim())                 { setError('Podaj adres e-mail.'); return }
     if (!imageFile)                    { setError('Wgraj obrazek.'); return }
     if (hasOverlap(sel.x, sel.y, sel.w, sel.h)) { setError('Ten obszar nakłada się na istniejący blok. Wybierz inne miejsce.'); return }
 
@@ -638,7 +640,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
       const { error: insErr } = await supabase.from('pixel_blocks').insert({
         id, x: sel.x, y: sel.y, width: sel.w, height: sel.h,
         image_url: urlData.publicUrl, link_url: linkUrl || null,
-        owner_name: ownerName || null, alt_text: altText || null,
+        owner_name: ownerName || null, alt_text: altText || null, email,
       })
       if (insErr) throw new Error(insErr.message)
       setSuccess(true)
@@ -885,16 +887,17 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
 
         {/* Text fields */}
         {([
-          { id: 'owner', label: 'Nazwa właściciela', val: ownerName, set: setOwnerName, placeholder: 'np. Studio Orbit',  req: true },
-          { id: 'link',  label: 'Link URL (strona, blog, etc)', val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false },
-          { id: 'alt',   label: 'Opis obrazka',              val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false },
-        ] as const).map(({ id, label, val, set, placeholder, req }) => (
+          { id: 'owner', label: 'Nazwa właściciela',          val: ownerName, set: setOwnerName, placeholder: 'Nazwa',              req: true,  type: 'text'  },
+          { id: 'email', label: 'Adres e-mail',               val: email,     set: setEmail,     placeholder: 'email@gmail.com',    req: true,  type: 'email' },
+          { id: 'link',  label: 'Link URL (strona, blog, etc)', val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false, type: 'url'   },
+          { id: 'alt',   label: 'Opis obrazka',               val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false, type: 'text'  },
+        ] as const).map(({ id, label, val, set, placeholder, req, type }) => (
           <div key={id} style={{ marginBottom: 16 }}>
             <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
               {label}{req && <span style={{ color: '#FF4D2E' }}> *</span>}
             </label>
             <input
-              type="text" value={val} onChange={e => set(e.target.value)}
+              type={type} value={val} onChange={e => set(e.target.value)}
               placeholder={placeholder} required={req}
               style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 12px', fontFamily: 'var(--font-inter), sans-serif', fontSize: 14, outline: 'none' }}
             />
