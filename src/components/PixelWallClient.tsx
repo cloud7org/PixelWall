@@ -24,6 +24,8 @@ export default function PixelWallClient() {
   const [sheetFile, setSheetFile] = useState<File | null>(null)
   const [sheetImageUrl, setSheetImageUrl] = useState<string | null>(null)
   const [tooltip, setTooltip] = useState<PixelBlock | null>(null)
+  const [showGestureHint, setShowGestureHint] = useState(false)
+  const [gestureHintExiting, setGestureHintExiting] = useState(false)
   const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -53,6 +55,21 @@ export default function PixelWallClient() {
   const soldPixels = blocks.reduce((sum, b) => sum + b.width * b.height, 0)
 
   const handleHover = useCallback((_: PixelBlock | null) => {}, [])
+
+  const closeGestureHint = useCallback(() => {
+    setGestureHintExiting(true)
+    setTimeout(() => {
+      setGestureHintExiting(false)
+      setShowGestureHint(false)
+    }, 380)
+  }, [])
+
+  useEffect(() => {
+    if (!isMobile) return
+    setShowGestureHint(true)
+    const t = setTimeout(() => closeGestureHint(), 4000)
+    return () => clearTimeout(t)
+  }, [isMobile, closeGestureHint])
 
   const handleBlocksLoaded = useCallback((loaded: PixelBlock[]) => setBlocks(loaded), [])
   const handleNewBlock = useCallback((block: PixelBlock) => setBlocks(prev => [...prev, block]), [])
@@ -117,6 +134,81 @@ export default function PixelWallClient() {
           draftImageUrl={bottomSheetOpen && sheetImageUrl ? sheetImageUrl : undefined}
           onSelChange={setDragSel}
         />
+
+        {/* Ikona "?" — widoczna gdy overlay gestów jest zamknięty */}
+        {isMobile && !showGestureHint && (
+          <button
+            onClick={() => setShowGestureHint(true)}
+            title="Instrukcje gestów"
+            style={{
+              position: 'absolute', top: 12, right: 12, zIndex: 20,
+              width: 32, height: 32,
+              border: '1px solid #3A3C46',
+              background: 'rgba(11,12,16,0.70)',
+              color: '#8A8676',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', padding: 0,
+              fontFamily: 'var(--font-jetbrains-mono), monospace',
+              fontSize: 14, fontWeight: 600,
+            }}
+          >
+            ?
+          </button>
+        )}
+
+        {/* Overlay gestów — mobile only */}
+        {isMobile && showGestureHint && (
+          <div
+            onPointerDown={closeGestureHint}
+            style={{
+              position: 'absolute', inset: 0, zIndex: 20,
+              background: 'rgba(11,12,16,0.82)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '0 28px',
+              fontFamily: 'var(--font-jetbrains-mono), monospace',
+              transformOrigin: 'top right',
+              ...(gestureHintExiting
+                ? {
+                    transform: 'scale(0)',
+                    opacity: 0,
+                    transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease',
+                  }
+                : { animation: 'gestureHintIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards' }
+              ),
+            }}
+          >
+            <button
+              onPointerDown={e => { e.stopPropagation(); closeGestureHint() }}
+              style={{
+                position: 'absolute', top: 12, right: 12,
+                width: 28, height: 28,
+                border: '1px solid #3A3C46',
+                background: 'transparent', color: '#8A8676',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', padding: 0, fontSize: 16, lineHeight: 1,
+              }}
+              aria-label="Zamknij"
+            >✕</button>
+
+            <p style={{ color: '#2EE6A6', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 18px' }}>
+              GESTY TOUCH
+            </p>
+
+            {([
+              ['1 palec',            'zaznacz obszar'],
+              ['2 palce — rozsuń',   'przybliż'],
+              ['2 palce — zbliż',    'oddal'],
+              ['2 palce — przesuń',  'nawiguj po siatce'],
+              ['1 palec na obrazie', 'przesuń grafikę'],
+            ] as const).map(([gesture, action]) => (
+              <div key={gesture} style={{ display: 'flex', width: '100%', gap: 8, marginBottom: 10, alignItems: 'baseline' }}>
+                <span style={{ color: '#F5F0E6', fontSize: 11, flexShrink: 0, minWidth: 148 }}>{gesture}</span>
+                <span style={{ color: '#5A5C66', fontSize: 11 }}>→</span>
+                <span style={{ color: '#B7B2A4', fontSize: 11 }}>{action}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <CanvasToolbar

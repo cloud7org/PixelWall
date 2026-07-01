@@ -58,3 +58,8 @@ html, body {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+
+@keyframes gestureHintIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
