@@ -20,6 +20,7 @@ export default function PixelWallClient() {
   const [externalScale, setExternalScale] = useState<number | undefined>(undefined)
 
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
+  const [toolMode, setToolMode] = useState<'pan' | 'draw'>('pan')
   const [dragSel, setDragSel] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const [sheetFile, setSheetFile] = useState<File | null>(null)
   const [sheetImageUrl, setSheetImageUrl] = useState<string | null>(null)
@@ -77,6 +78,7 @@ export default function PixelWallClient() {
 
   const handleDragSelectComplete = useCallback((sel: { x: number; y: number; w: number; h: number }) => {
     setDragSel(sel)
+    setToolMode('pan')
     fileInputRef.current?.click()
   }, [])
 
@@ -98,12 +100,14 @@ export default function PixelWallClient() {
     setBottomSheetOpen(false)
     setSheetFile(null)
     setDragSel(null)
+    setToolMode('pan')
   }, [])
 
   const handleBottomSheetSuccess = useCallback(() => {
     setBottomSheetOpen(false)
     setSheetFile(null)
     setDragSel(null)
+    setToolMode('pan')
     setFetchKey(k => (k ?? 0) + 1)
   }, [])
 
@@ -131,6 +135,7 @@ export default function PixelWallClient() {
           fetchKey={fetchKey}
           showHint={!buyOpen && !bottomSheetOpen}
           isMobile={isMobile}
+          toolMode={toolMode}
           onDragSelectComplete={handleDragSelectComplete}
           onBlockClick={handleBlockClick}
           draftSel={bottomSheetOpen ? dragSel ?? undefined : undefined}
@@ -218,11 +223,11 @@ export default function PixelWallClient() {
             </p>
 
             {([
-              ['1 palec',            'zaznacz obszar'],
-              ['2 palce — rozsuń',   'przybliż'],
-              ['2 palce — zbliż',    'oddal'],
-              ['2 palce — przesuń',  'nawiguj po siatce'],
-              ['1 palec na obrazie', 'przesuń grafikę'],
+              ['1 palec',                'przesuń siatkę'],
+              ['przycisk "Zaznacz"',     'włącza rysowanie obszaru'],
+              ['2 palce — rozsuń',       'przybliż'],
+              ['2 palce — zbliż',        'oddal'],
+              ['1 palec na obrazie',     'przesuń grafikę'],
             ] as const).map(([gesture, action]) => (
               <div key={gesture} style={{ display: 'flex', width: '100%', gap: 8, marginBottom: 10, alignItems: 'baseline' }}>
                 <span style={{ color: '#F5F0E6', fontSize: 11, flexShrink: 0, minWidth: 148 }}>{gesture}</span>
@@ -238,6 +243,9 @@ export default function PixelWallClient() {
         zoomPct={zoomPct}
         onZoomChange={handleSliderChange}
         onFullscreen={handleFullscreen}
+        toolMode={toolMode}
+        onToolModeChange={setToolMode}
+        showToolModeToggle={!bottomSheetOpen}
       />
 
       {/* Counter bar */}

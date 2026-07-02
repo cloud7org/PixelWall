@@ -15,6 +15,7 @@ interface Props {
   fetchKey?: number
   showHint?: boolean
   isMobile?: boolean
+  toolMode?: 'pan' | 'draw'
   onDragSelectComplete?: (sel: { x: number; y: number; w: number; h: number }) => void
   onBlockClick?: (block: PixelBlock) => void
   draftSel?: { x: number; y: number; w: number; h: number }
@@ -30,7 +31,7 @@ const MAX_SCALE = 8
 
 export default function PixelGrid({
   onHover, onBlocksLoaded, onNewBlock, onZoomChange,
-  externalScale, reinitKey, resetViewKey, fetchKey, showHint, isMobile,
+  externalScale, reinitKey, resetViewKey, fetchKey, showHint, isMobile, toolMode,
   onDragSelectComplete, onBlockClick,
   draftSel, draftImageUrl, onSelChange,
 }: Props) {
@@ -57,6 +58,8 @@ export default function PixelGrid({
   const drawSelOverlapRef = useRef(false)
   const isMobileRef = useRef(false)
   isMobileRef.current = isMobile ?? false
+  const toolModeRef = useRef<'pan' | 'draw'>('draw')
+  toolModeRef.current = toolMode ?? 'draw'
   const onDragSelCompleteRef = useRef<typeof onDragSelectComplete>(undefined)
   const onBlockClickRef = useRef<typeof onBlockClick>(undefined)
   // Draft image refs
@@ -234,7 +237,9 @@ export default function PixelGrid({
         ctx.lineDashOffset = 0
         const fs = Math.max(8, 14 / scale)
         ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-        const lbl = isMobileRef.current ? 'Przeciągnij palcem, aby wybrać obszar' : 'Kliknij 2 razy na wolny obszar'
+        const lbl = isMobileRef.current
+          ? (toolModeRef.current === 'draw' ? 'Przeciągnij palcem, aby wybrać obszar' : 'Włącz "Zaznacz", aby wybrać obszar')
+          : 'Kliknij 2 razy na wolny obszar'
         const tw = ctx.measureText(lbl).width
         const pad = 2 / scale
         const lh = fs * 1.7
@@ -536,6 +541,12 @@ export default function PixelGrid({
           }
           // Outside draft: pan
           isDraggingRef.current = true
+          return
+        }
+
+        if (toolModeRef.current === 'pan') {
+          isDraggingRef.current = true
+          isDrawingRef.current = false
           return
         }
 

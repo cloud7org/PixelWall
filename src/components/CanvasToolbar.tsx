@@ -1,14 +1,18 @@
 'use client'
 
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import ToolModeToggle from './ToolModeToggle'
 
 interface Props {
   zoomPct: number
   onZoomChange: (pct: number) => void
   onFullscreen: () => void
+  toolMode?: 'pan' | 'draw'
+  onToolModeChange?: (mode: 'pan' | 'draw') => void
+  showToolModeToggle?: boolean
 }
 
-export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen }: Props) {
+export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen, toolMode, onToolModeChange, showToolModeToggle = true }: Props) {
   const { isMobile } = useBreakpoint()
 
   if (isMobile) {
@@ -17,7 +21,7 @@ export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen }: P
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end',
+          justifyContent: showToolModeToggle && toolMode && onToolModeChange ? 'space-between' : 'flex-end',
           padding: '8px 12px',
           borderTop: '1px solid #E3DFD3',
           background: '#FAF8F2',
@@ -29,6 +33,9 @@ export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen }: P
           gap: 10,
         }}
       >
+        {showToolModeToggle && toolMode && onToolModeChange && (
+          <ToolModeToggle mode={toolMode} onChange={onToolModeChange} />
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <div style={{ position: 'relative', width: 70, height: 3, background: '#E3DFD3' }}>
             <input

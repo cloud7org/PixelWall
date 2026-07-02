@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import ToolModeToggle from './ToolModeToggle'
 
 const CENTRAL_W = 1000
 const CENTRAL_H = 1000
@@ -97,6 +98,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const activePtrsRef  = useRef<Map<number, { x: number; y: number }>>(new Map())
   const pinchRef        = useRef<{ dist: number; cx: number; cy: number } | null>(null)
   const gestureHintRef  = useRef(true)
+  const didInitModeRef  = useRef(false)
+  const isMobileRef     = useRef(false)
 
   // React state
   const [sel, setSel]               = useState<Sel>(defaultSel)
@@ -127,6 +130,15 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   }, [sel])
   useEffect(() => { toolModeRef.current    = toolMode    }, [toolMode])
   useEffect(() => { snapEnabledRef.current = snapEnabled }, [snapEnabled])
+
+  // Mobile: default to pan mode so single-finger drag scrolls like users expect
+  useEffect(() => {
+    isMobileRef.current = isMobile
+    if (isMobile && !didInitModeRef.current) {
+      didInitModeRef.current = true
+      setToolMode('pan')
+    }
+  }, [isMobile])
 
   const snap = useCallback((v: number) =>
     snapEnabledRef.current ? Math.round(v / (GRID_STEP / 2)) * (GRID_STEP / 2) : v, [])
@@ -516,7 +528,12 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     const onPointerUp = (e: PointerEvent) => {
       activePtrsRef.current.delete(e.pointerId)
       if (activePtrsRef.current.size < 2) pinchRef.current = null
+      const wasDrawing = dragRef.current.mode === 'draw'
       dragRef.current.mode = 'none'
+      // Mobile: a freshly drawn selection is done — hand control back to panning
+      if (isMobileRef.current && wasDrawing && toolModeRef.current === 'draw') {
+        setToolMode('pan')
+      }
       canvas.style.cursor = (toolModeRef.current === 'pan' || spaceRef.current) ? 'grab' : 'crosshair'
     }
 
@@ -717,11 +734,11 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
               GESTY TOUCH
             </p>
             {([
-              ['1 palec',            'zaznacz obszar'],
-              ['2 palce — rozsuń',   'przybliż'],
-              ['2 palce — zbliż',    'oddal'],
-              ['2 palce — przesuń',  'nawiguj po siatce'],
-              ['1 palec na obrazie', 'przesuń grafikę'],
+              ['1 palec',                'przesuń siatkę'],
+              ['przycisk "Zaznacz"',     'włącza rysowanie obszaru'],
+              ['2 palce — rozsuń',       'przybliż'],
+              ['2 palce — zbliż',        'oddal'],
+              ['1 palec na zaznaczeniu', 'przesuń / zmień rozmiar'],
             ] as const).map(([gesture, action]) => (
               <div key={gesture} style={{ display: 'flex', width: '100%', gap: 8, marginBottom: 10, alignItems: 'baseline' }}>
                 <span style={{ color: '#F5F0E6', fontSize: 11, flexShrink: 0, minWidth: 148 }}>{gesture}</span>
@@ -732,8 +749,9 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           </div>
         )}
 
-        {/* Snap toggle + help button */}
-        <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 5, display: 'flex', gap: 6, alignItems: 'center' }}>
+        {/* Tool mode toggle + snap toggle + help button */}
+        <div style={{ position: 'absolute', top: 16, right: 16, left: isMobile ? 16 : undefined, zIndex: 5, display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 6, alignItems: 'center' }}>
+          {isMobile && <ToolModeToggle mode={toolMode === 'pan' ? 'pan' : 'draw'} onChange={setToolMode} />}
           {isMobile && (
             <button
               onClick={() => { gestureHintRef.current = true; setShowGestureHint(true) }}
