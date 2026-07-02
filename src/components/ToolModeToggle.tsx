@@ -6,11 +6,12 @@ interface Props {
 }
 
 export default function ToolModeToggle({ mode, onChange }: Props) {
-  const btnStyle = (active: boolean): React.CSSProperties => ({
+  const btnStyle = (activeColor: string | null): React.CSSProperties => ({
     padding: '6px 10px',
     border: 'none',
-    background: active ? '#0B0C10' : 'transparent',
-    color: active ? '#F5F0E6' : '#8A8676',
+    background: activeColor ?? 'transparent',
+    color: activeColor ? '#0B0C10' : '#8A8676',
+    fontWeight: activeColor ? 700 : 400,
     cursor: 'pointer',
     fontFamily: 'var(--font-jetbrains-mono), monospace',
     fontSize: 11,
@@ -20,13 +21,27 @@ export default function ToolModeToggle({ mode, onChange }: Props) {
   })
 
   return (
-    <div style={{ display: 'flex', border: '1px solid #E3DFD3', background: '#FAF8F2', flexShrink: 0 }}>
-      <button type="button" onClick={() => onChange('pan')} style={btnStyle(mode === 'pan')}>
-        Przesuń
-      </button>
-      <button type="button" onClick={() => onChange('draw')} style={btnStyle(mode === 'draw')}>
-        Zaznacz
-      </button>
+    <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+      {/* Pulsing glow frame around both buttons */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: -4,
+          background: '#FF4D2E',
+          filter: 'blur(6px)',
+          opacity: 0.55,
+          animation: 'pulse 1.6s ease-in-out infinite',
+          pointerEvents: 'none',
+        }}
+      />
+      <div style={{ position: 'relative', display: 'flex', border: '2px solid #FF4D2E', background: '#FAF8F2' }}>
+        <button type="button" onClick={() => onChange('pan')} style={btnStyle(mode === 'pan' ? '#2EE6A6' : null)}>
+          Przesuń
+        </button>
+        <button type="button" onClick={() => onChange('draw')} style={btnStyle(mode === 'draw' ? '#FF4D2E' : null)}>
+          Zaznacz
+        </button>
+      </div>
     </div>
   )
 }

@@ -5,10 +5,11 @@ import type { PixelBlock } from '@/types'
 
 interface Props {
   block: PixelBlock
+  anchor: { x: number; y: number; width: number; height: number }
   onClose: () => void
 }
 
-export default function BlockTooltip({ block, onClose }: Props) {
+export default function BlockTooltip({ block, anchor, onClose }: Props) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -16,14 +17,25 @@ export default function BlockTooltip({ block, onClose }: Props) {
     return () => cancelAnimationFrame(id)
   }, [])
 
+  // Popover anchored to the clicked block, flipped above/below so it never
+  // covers the fixed bottom nav/counter bar.
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const tooltipWidth = Math.min(280, vw - 32)
+  const showAbove = anchor.y > vh * 0.55
+  const left = Math.min(Math.max(anchor.x + anchor.width / 2 - tooltipWidth / 2, 16), vw - 16 - tooltipWidth)
+  const verticalStyle: React.CSSProperties = showAbove
+    ? { bottom: vh - anchor.y + 8 }
+    : { top: anchor.y + anchor.height + 8 }
+
   return (
     <div
       onClick={onClose}
       style={{
         position: 'fixed',
-        bottom: 80,
-        left: 16,
-        right: 16,
+        left,
+        width: tooltipWidth,
+        ...verticalStyle,
         zIndex: 250,
         background: '#1A1C24',
         border: '1px solid #2A2C36',

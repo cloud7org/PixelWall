@@ -25,6 +25,7 @@ export default function PixelWallClient() {
   const [sheetFile, setSheetFile] = useState<File | null>(null)
   const [sheetImageUrl, setSheetImageUrl] = useState<string | null>(null)
   const [tooltip, setTooltip] = useState<PixelBlock | null>(null)
+  const [tooltipAnchor, setTooltipAnchor] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
   const [showGestureHint, setShowGestureHint] = useState(false)
   const [gestureHintExiting, setGestureHintExiting] = useState(false)
   const [resetViewKey, setResetViewKey] = useState(0)
@@ -90,9 +91,10 @@ export default function PixelWallClient() {
     setBottomSheetOpen(true)
   }, [])
 
-  const handleBlockClick = useCallback((block: PixelBlock) => {
+  const handleBlockClick = useCallback((block: PixelBlock, screenRect: { x: number; y: number; width: number; height: number }) => {
     if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current)
     setTooltip(block)
+    setTooltipAnchor(screenRect)
     tooltipTimerRef.current = setTimeout(() => setTooltip(null), 3500)
   }, [])
 
@@ -292,9 +294,10 @@ export default function PixelWallClient() {
       )}
 
       {/* Block info tooltip */}
-      {tooltip && (
+      {tooltip && tooltipAnchor && (
         <BlockTooltip
           block={tooltip}
+          anchor={tooltipAnchor}
           onClose={() => {
             if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current)
             setTooltip(null)

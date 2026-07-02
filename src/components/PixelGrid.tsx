@@ -17,7 +17,7 @@ interface Props {
   isMobile?: boolean
   toolMode?: 'pan' | 'draw'
   onDragSelectComplete?: (sel: { x: number; y: number; w: number; h: number }) => void
-  onBlockClick?: (block: PixelBlock) => void
+  onBlockClick?: (block: PixelBlock, screenRect: { x: number; y: number; width: number; height: number }) => void
   draftSel?: { x: number; y: number; w: number; h: number }
   draftImageUrl?: string
   onSelChange?: (sel: { x: number; y: number; w: number; h: number }) => void
@@ -714,7 +714,14 @@ export default function PixelGrid({
         const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
         const hit = hitTest(lx, ly)
         if (hit) {
-          onBlockClickRef.current?.(hit)
+          const { scale, offsetX, offsetY } = viewRef.current
+          const screenRect = {
+            x: rect.left + offsetX + hit.x * scale,
+            y: rect.top + offsetY + hit.y * scale,
+            width: hit.width * scale,
+            height: hit.height * scale,
+          }
+          onBlockClickRef.current?.(hit, screenRect)
         } else if (e.pointerType !== 'touch') {
           // Desktop double-click on empty area
           const now = performance.now()
