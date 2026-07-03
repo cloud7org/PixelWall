@@ -908,18 +908,18 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
 
         {/* Text fields */}
         {([
-          { id: 'owner', label: 'Nazwa właściciela',          val: ownerName, set: setOwnerName, placeholder: 'Nazwa',              req: true,  type: 'text'  },
-          { id: 'email', label: 'Adres e-mail',               val: email,     set: setEmail,     placeholder: 'email@gmail.com',    req: true,  type: 'email' },
-          { id: 'link',  label: 'Link URL (strona, blog, etc)', val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false, type: 'text'  },
-          { id: 'alt',   label: 'Opis obrazka',               val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false, type: 'text'  },
-        ] as const).map(({ id, label, val, set, placeholder, req, type }) => (
+          { id: 'owner', label: 'Nazwa właściciela',          val: ownerName, set: setOwnerName, placeholder: 'Nazwa',              req: true,  type: 'text',  maxLength: 50  },
+          { id: 'email', label: 'Adres e-mail',               val: email,     set: setEmail,     placeholder: 'email@gmail.com',    req: true,  type: 'email', maxLength: undefined },
+          { id: 'link',  label: 'Link URL (strona, blog, etc)', val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false, type: 'text',  maxLength: undefined },
+          { id: 'alt',   label: 'Opis obrazka',               val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false, type: 'text',  maxLength: 300 },
+        ] as const).map(({ id, label, val, set, placeholder, req, type, maxLength }) => (
           <div key={id} style={{ marginBottom: 16 }}>
             <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
               {label}{req && <span style={{ color: '#FF4D2E' }}> *</span>}
             </label>
             <input
               type={type} value={val} onChange={e => set(e.target.value)}
-              placeholder={placeholder} required={req}
+              placeholder={placeholder} required={req} maxLength={maxLength}
               style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 12px', fontFamily: 'var(--font-inter), sans-serif', fontSize: 14, outline: 'none' }}
             />
           </div>

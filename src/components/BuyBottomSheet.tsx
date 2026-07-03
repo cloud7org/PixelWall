@@ -261,6 +261,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
                 onChange={e => setOwnerName(e.target.value)}
                 placeholder="Nazwa"
                 style={inputStyle}
+                maxLength={50}
                 required
               />
             </div>
@@ -293,6 +294,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
                 onChange={e => setAltText(e.target.value)}
                 placeholder="Opis obrazu"
                 style={inputStyle}
+                maxLength={300}
               />
             </div>
           </div>
