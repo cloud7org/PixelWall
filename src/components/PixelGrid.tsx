@@ -16,6 +16,7 @@ interface Props {
   showHint?: boolean
   isMobile?: boolean
   toolMode?: 'pan' | 'draw'
+  onToolModeChange?: (mode: 'pan' | 'draw') => void
   onDragSelectComplete?: (sel: { x: number; y: number; w: number; h: number }) => void
   onBlockClick?: (block: PixelBlock, screenRect: { x: number; y: number; width: number; height: number }) => void
   draftSel?: { x: number; y: number; w: number; h: number }
@@ -31,7 +32,7 @@ const MAX_SCALE = 8
 
 export default function PixelGrid({
   onHover, onBlocksLoaded, onNewBlock, onZoomChange,
-  externalScale, reinitKey, resetViewKey, fetchKey, showHint, isMobile, toolMode,
+  externalScale, reinitKey, resetViewKey, fetchKey, showHint, isMobile, toolMode, onToolModeChange,
   onDragSelectComplete, onBlockClick,
   draftSel, draftImageUrl, onSelChange,
 }: Props) {
@@ -62,6 +63,7 @@ export default function PixelGrid({
   toolModeRef.current = toolMode ?? 'draw'
   const onDragSelCompleteRef = useRef<typeof onDragSelectComplete>(undefined)
   const onBlockClickRef = useRef<typeof onBlockClick>(undefined)
+  const onToolModeChangeRef = useRef<typeof onToolModeChange>(undefined)
   // Draft image refs
   const draftSelRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
   const draftImgRef = useRef<HTMLImageElement | null>(null)
@@ -76,6 +78,7 @@ export default function PixelGrid({
   useEffect(() => { showHintRef.current = !!showHint }, [showHint])
   useEffect(() => { onDragSelCompleteRef.current = onDragSelectComplete }, [onDragSelectComplete])
   useEffect(() => { onBlockClickRef.current = onBlockClick }, [onBlockClick])
+  useEffect(() => { onToolModeChangeRef.current = onToolModeChange }, [onToolModeChange])
   useEffect(() => { draftSelRef.current = draftSel ?? null }, [draftSel])
   useEffect(() => { onSelChangeRef.current = onSelChange }, [onSelChange])
 
@@ -544,6 +547,26 @@ export default function PixelGrid({
           return
         }
 
+        // Double-tap on empty area: jump straight into drawing a selection,
+        // even while in pan mode — and sync the mode toggle to "Zaznacz".
+        const tapCx = e.clientX - rect.left, tapCy = e.clientY - rect.top
+        const tapNow = performance.now()
+        const lastTap = lastTapRef.current
+        const isDoubleTap = !!lastTap && tapNow - lastTap.time < 400 && Math.hypot(tapCx - lastTap.cx, tapCy - lastTap.cy) < 40
+        lastTapRef.current = null
+
+        if (isDoubleTap && !hitTest(lx, ly)) {
+          if (toolModeRef.current !== 'draw') onToolModeChangeRef.current?.('draw')
+          isDrawingRef.current = true
+          isDraggingRef.current = false
+          const sx = snap(Math.round(lx))
+          const sy = snap(Math.round(ly))
+          drawStartGridRef.current = { x: sx, y: sy }
+          drawSelRef.current = { x: sx, y: sy, w: 10, h: 10 }
+          canvas.style.cursor = 'crosshair'
+          return
+        }
+
         if (toolModeRef.current === 'pan') {
           isDraggingRef.current = true
           isDrawingRef.current = false
@@ -735,6 +758,9 @@ export default function PixelGrid({
           } else {
             lastTapRef.current = { time: now, cx, cy }
           }
+        } else {
+          // Touch: remember this tap so the next pointerdown can recognize a double-tap
+          lastTapRef.current = { time: performance.now(), cx: e.clientX - rect.left, cy: e.clientY - rect.top }
         }
       }
       dragMovedRef.current = false

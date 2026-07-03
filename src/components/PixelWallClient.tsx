@@ -138,6 +138,7 @@ export default function PixelWallClient() {
           showHint={!buyOpen && !bottomSheetOpen}
           isMobile={isMobile}
           toolMode={toolMode}
+          onToolModeChange={setToolMode}
           onDragSelectComplete={handleDragSelectComplete}
           onBlockClick={handleBlockClick}
           draftSel={bottomSheetOpen ? dragSel ?? undefined : undefined}
