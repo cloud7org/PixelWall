@@ -1,13 +1,17 @@
+import BackToGridCornerButton from './BackToGridCornerButton'
+
 export default function TimesSquare() {
   return (
     <section
       style={{
+        position: 'relative',
         background: '#14151B',
         borderTop: '1px solid #1F212B',
         borderBottom: '1px solid #1F212B',
         padding: '80px 48px',
       }}
     >
+      <BackToGridCornerButton />
       <div
         style={{
           maxWidth: 1080,

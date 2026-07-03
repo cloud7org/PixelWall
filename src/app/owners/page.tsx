@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
+import BackToGridCornerButton from '@/components/BackToGridCornerButton'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
@@ -33,7 +34,8 @@ export default function OwnersPage() {
     <div style={{ background: '#0B0C10', minHeight: '100vh' }}>
       <Navbar />
 
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: isMobile ? '32px 16px' : '56px 48px' }}>
+      <div style={{ position: 'relative', maxWidth: 1080, margin: '0 auto', padding: isMobile ? '32px 16px' : '56px 48px' }}>
+        <BackToGridCornerButton />
         <div style={{ marginBottom: 40 }}>
           <span
             style={{

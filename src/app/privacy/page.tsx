@@ -1,6 +1,7 @@
 'use client'
 
 import Navbar from '@/components/Navbar'
+import BackToGridLink from '@/components/BackToGridLink'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 const CONTACT_EMAIL = 'alex.mleczkomt@gmail.com'
@@ -70,6 +71,7 @@ export default function PrivacyPage() {
   return (
     <div style={{ background: '#0B0C10', minHeight: '100vh' }}>
       <Navbar />
+      <BackToGridLink />
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: pad }}>
 
