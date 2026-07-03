@@ -112,11 +112,63 @@ export default function PixelGrid({
     ctx.save()
     ctx.scale(dpr, dpr)
 
-    ctx.fillStyle = '#FAF8F2'
+    const bgGradient = ctx.createRadialGradient(cssW / 2, cssH * 0.35, 0, cssW / 2, cssH * 0.35, Math.max(cssW, cssH) * 0.8)
+    bgGradient.addColorStop(0, '#121834')
+    bgGradient.addColorStop(1, '#05060D')
+    ctx.fillStyle = bgGradient
     ctx.fillRect(0, 0, cssW, cssH)
 
     ctx.translate(offsetX, offsetY)
     ctx.scale(scale, scale)
+
+    // Starfield — night-sky backdrop; world-fixed cell size that auto-coarsens
+    // when zoomed way out, so the iteration count stays bounded at any zoom.
+    {
+      let starCell = 32
+      const rangeX = cssW / scale
+      const rangeY = cssH / scale
+      while ((rangeX / starCell) * (rangeY / starCell) > 3000) starCell *= 2
+      const starHash = (a: number, b: number) => {
+        let h = (a * 374761393 + b * 668265263) | 0
+        h = (h ^ (h >>> 13)) * 1274126177
+        h = h ^ (h >>> 16)
+        return ((h >>> 0) % 100000) / 100000
+      }
+      const cStartX = Math.floor(-offsetX / scale / starCell) - 1
+      const cStartY = Math.floor(-offsetY / scale / starCell) - 1
+      const cCountX = Math.ceil(rangeX / starCell) + 3
+      const cCountY = Math.ceil(rangeY / starCell) + 3
+      const tierDim: number[] = []
+      const tierMid: number[] = []
+      const tierBright: number[] = []
+      for (let cy = cStartY; cy < cStartY + cCountY; cy++) {
+        for (let cx = cStartX; cx < cStartX + cCountX; cx++) {
+          if (starHash(cx, cy) > 0.22) continue
+          const jx = starHash(cx * 7 + 3, cy * 13 + 5)
+          const jy = starHash(cx * 13 + 9, cy * 7 + 2)
+          const sizeH = starHash(cx * 31 + 1, cy * 17 + 4)
+          const sx = (cx + jx) * starCell
+          const sy = (cy + jy) * starCell
+          const r = (0.5 + sizeH * 1.1) / scale
+          const bucket = sizeH < 0.55 ? tierDim : sizeH < 0.85 ? tierMid : tierBright
+          bucket.push(sx, sy, r)
+        }
+      }
+      const fillStarTier = (pts: number[], alpha: number) => {
+        if (!pts.length) return
+        ctx.beginPath()
+        for (let i = 0; i < pts.length; i += 3) {
+          const sx = pts[i], sy = pts[i + 1], r = pts[i + 2]
+          ctx.moveTo(sx + r, sy)
+          ctx.arc(sx, sy, r, 0, Math.PI * 2)
+        }
+        ctx.fillStyle = `rgba(226,233,255,${alpha})`
+        ctx.fill()
+      }
+      fillStarTier(tierDim, 0.3)
+      fillStarTier(tierMid, 0.55)
+      fillStarTier(tierBright, 0.85)
+    }
 
     // Grid lines — millimeter paper style
     const MINOR = 10
@@ -124,35 +176,40 @@ export default function PixelGrid({
     const startY = Math.floor(-offsetY / scale / MINOR) * MINOR
     const endX   = startX + Math.ceil(cssW / scale / MINOR + 2) * MINOR
     const endY   = startY + Math.ceil(cssH / scale / MINOR + 2) * MINOR
+    const maxLineSpan = Math.max(endX - startX, endY - startY)
 
-    ctx.strokeStyle = 'rgba(0,0,0,0.07)'
-    ctx.lineWidth = 0.5 / scale
-    ctx.beginPath()
-    for (let x = startX; x <= endX; x += MINOR) {
-      if (x % GRID_STEP !== 0) { ctx.moveTo(x, startY); ctx.lineTo(x, endY) }
+    if (maxLineSpan / MINOR <= 2000) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'
+      ctx.lineWidth = 0.5 / scale
+      ctx.beginPath()
+      for (let x = startX; x <= endX; x += MINOR) {
+        if (x % GRID_STEP !== 0) { ctx.moveTo(x, startY); ctx.lineTo(x, endY) }
+      }
+      for (let y = startY; y <= endY; y += MINOR) {
+        if (y % GRID_STEP !== 0) { ctx.moveTo(startX, y); ctx.lineTo(endX, y) }
+      }
+      ctx.stroke()
     }
-    for (let y = startY; y <= endY; y += MINOR) {
-      if (y % GRID_STEP !== 0) { ctx.moveTo(startX, y); ctx.lineTo(endX, y) }
-    }
-    ctx.stroke()
 
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)'
-    ctx.lineWidth = 1 / scale
-    ctx.beginPath()
-    for (let x = startX; x <= endX; x += GRID_STEP) {
-      ctx.moveTo(x, startY); ctx.lineTo(x, endY)
+    if (maxLineSpan / GRID_STEP <= 2000) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)'
+      ctx.lineWidth = 1 / scale
+      ctx.beginPath()
+      for (let x = startX; x <= endX; x += GRID_STEP) {
+        ctx.moveTo(x, startY); ctx.lineTo(x, endY)
+      }
+      for (let y = startY; y <= endY; y += GRID_STEP) {
+        ctx.moveTo(startX, y); ctx.lineTo(endX, y)
+      }
+      ctx.stroke()
     }
-    for (let y = startY; y <= endY; y += GRID_STEP) {
-      ctx.moveTo(startX, y); ctx.lineTo(endX, y)
-    }
-    ctx.stroke()
 
-    ctx.strokeStyle = 'rgba(0,0,0,0.45)'
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)'
     ctx.lineWidth = 2 / scale
     ctx.strokeRect(0, 0, CENTRAL_W, CENTRAL_H)
 
     // Existing blocks
-    const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#1A1C24']
+    const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#F5F0E6']
     blocksRef.current.forEach(block => {
       const img = imagesRef.current.get(block.id)
       if (img && img.complete && img.naturalWidth > 0) {
@@ -203,7 +260,7 @@ export default function PixelGrid({
         ctx.arc(gx, gy, HR, 0, Math.PI * 2)
         ctx.fillStyle = '#FF4D2E'
         ctx.fill()
-        ctx.strokeStyle = '#FAF8F2'
+        ctx.strokeStyle = '#05060D'
         ctx.lineWidth = 1.5 / scale
         ctx.stroke()
       })

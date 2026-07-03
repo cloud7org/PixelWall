@@ -23,8 +23,8 @@ export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen, too
           alignItems: 'center',
           justifyContent: showToolModeToggle && toolMode && onToolModeChange ? 'space-between' : 'flex-end',
           padding: '8px 12px',
-          borderTop: '1px solid #E3DFD3',
-          background: '#FAF8F2',
+          borderTop: '1px solid #1F212B',
+          background: '#0B0C10',
           fontFamily: 'var(--font-jetbrains-mono), monospace',
           fontSize: 11,
           color: '#8A8676',
@@ -37,7 +37,7 @@ export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen, too
           <ToolModeToggle mode={toolMode} onChange={onToolModeChange} />
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <div style={{ position: 'relative', width: 70, height: 3, background: '#E3DFD3' }}>
+          <div style={{ position: 'relative', width: 70, height: 3, background: '#2A2C36' }}>
             <input
               type="range"
               min={10}
@@ -66,7 +66,7 @@ export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen, too
             title="Pełny ekran"
             style={{
               width: 28, height: 28,
-              border: '1px solid #E3DFD3',
+              border: '1px solid #2A2C36',
               background: 'transparent',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#8A8676', cursor: 'pointer', padding: 0,
@@ -89,8 +89,8 @@ export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen, too
         justifyContent: 'space-between',
         padding: '0 18px',
         height: 38,
-        borderTop: '1px solid #E3DFD3',
-        background: '#FAF8F2',
+        borderTop: '1px solid #1F212B',
+        background: '#0B0C10',
         fontFamily: 'var(--font-jetbrains-mono), monospace',
         fontSize: 12,
         color: '#8A8676',
@@ -99,7 +99,7 @@ export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen, too
       }}
     >
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
-        <div style={{ position: 'relative', width: 90, height: 3, background: '#E3DFD3' }}>
+        <div style={{ position: 'relative', width: 90, height: 3, background: '#2A2C36' }}>
           <input
             type="range"
             min={10}
@@ -137,7 +137,7 @@ export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen, too
           style={{
             width: 26,
             height: 26,
-            border: '1px solid #E3DFD3',
+            border: '1px solid #2A2C36',
             background: 'transparent',
             display: 'flex',
             alignItems: 'center',

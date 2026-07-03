@@ -34,7 +34,7 @@ export default function ToolModeToggle({ mode, onChange }: Props) {
           pointerEvents: 'none',
         }}
       />
-      <div style={{ position: 'relative', display: 'flex', border: '2px solid #FF4D2E', background: '#FAF8F2' }}>
+      <div style={{ position: 'relative', display: 'flex', border: '2px solid #FF4D2E', background: '#0B0C10' }}>
         <button type="button" onClick={() => onChange('pan')} style={btnStyle(mode === 'pan' ? '#2EE6A6' : null)}>
           Przesuń
         </button>

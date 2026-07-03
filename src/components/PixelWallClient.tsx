@@ -154,9 +154,10 @@ export default function PixelWallClient() {
               title="Wróć do centrum"
               style={{
                 height: 32, padding: '0 10px',
-                border: '1px solid #3A3C46',
-                background: 'rgba(11,12,16,0.70)',
-                color: '#8A8676',
+                border: '1px solid rgba(255,255,255,0.25)',
+                background: 'rgba(255,255,255,0.08)',
+                backdropFilter: 'blur(4px)',
+                color: '#B7B2A4',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-jetbrains-mono), monospace',
@@ -172,9 +173,10 @@ export default function PixelWallClient() {
                 title="Instrukcje gestów"
                 style={{
                   width: 32, height: 32,
-                  border: '1px solid #3A3C46',
-                  background: 'rgba(11,12,16,0.70)',
-                  color: '#8A8676',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  background: 'rgba(255,255,255,0.08)',
+                  backdropFilter: 'blur(4px)',
+                  color: '#B7B2A4',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer', padding: 0,
                   fontFamily: 'var(--font-jetbrains-mono), monospace',

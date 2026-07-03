@@ -161,7 +161,10 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     ctx.save()
     ctx.scale(dpr, dpr)
 
-    ctx.fillStyle = '#FAF8F2'
+    const bgGradient = ctx.createRadialGradient(cssW / 2, cssH * 0.35, 0, cssW / 2, cssH * 0.35, Math.max(cssW, cssH) * 0.8)
+    bgGradient.addColorStop(0, '#121834')
+    bgGradient.addColorStop(1, '#05060D')
+    ctx.fillStyle = bgGradient
     ctx.fillRect(0, 0, cssW, cssH)
 
     ctx.translate(offsetX, offsetY)
@@ -172,35 +175,89 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     const sY = Math.floor(-offsetY / scale / GRID_STEP) * GRID_STEP
     const eX = sX + Math.ceil(cssW / scale / GRID_STEP + 2) * GRID_STEP
     const eY = sY + Math.ceil(cssH / scale / GRID_STEP + 2) * GRID_STEP
+    const maxLineSpan = Math.max(eX - sX, eY - sY)
+
+    // Starfield — night-sky backdrop; world-fixed cell size that auto-coarsens
+    // when zoomed way out, so the iteration count stays bounded at any zoom.
+    {
+      let starCell = 32
+      const rangeX = cssW / scale
+      const rangeY = cssH / scale
+      while ((rangeX / starCell) * (rangeY / starCell) > 3000) starCell *= 2
+      const starHash = (a: number, b: number) => {
+        let h = (a * 374761393 + b * 668265263) | 0
+        h = (h ^ (h >>> 13)) * 1274126177
+        h = h ^ (h >>> 16)
+        return ((h >>> 0) % 100000) / 100000
+      }
+      const cStartX = Math.floor(-offsetX / scale / starCell) - 1
+      const cStartY = Math.floor(-offsetY / scale / starCell) - 1
+      const cCountX = Math.ceil(rangeX / starCell) + 3
+      const cCountY = Math.ceil(rangeY / starCell) + 3
+      const tierDim: number[] = []
+      const tierMid: number[] = []
+      const tierBright: number[] = []
+      for (let cy = cStartY; cy < cStartY + cCountY; cy++) {
+        for (let cx = cStartX; cx < cStartX + cCountX; cx++) {
+          if (starHash(cx, cy) > 0.22) continue
+          const jx = starHash(cx * 7 + 3, cy * 13 + 5)
+          const jy = starHash(cx * 13 + 9, cy * 7 + 2)
+          const sizeH = starHash(cx * 31 + 1, cy * 17 + 4)
+          const sx = (cx + jx) * starCell
+          const sy = (cy + jy) * starCell
+          const r = (0.5 + sizeH * 1.1) / scale
+          const bucket = sizeH < 0.55 ? tierDim : sizeH < 0.85 ? tierMid : tierBright
+          bucket.push(sx, sy, r)
+        }
+      }
+      const fillStarTier = (pts: number[], alpha: number) => {
+        if (!pts.length) return
+        ctx.beginPath()
+        for (let i = 0; i < pts.length; i += 3) {
+          const sx = pts[i], sy = pts[i + 1], r = pts[i + 2]
+          ctx.moveTo(sx + r, sy)
+          ctx.arc(sx, sy, r, 0, Math.PI * 2)
+        }
+        ctx.fillStyle = `rgba(226,233,255,${alpha})`
+        ctx.fill()
+      }
+      fillStarTier(tierDim, 0.3)
+      fillStarTier(tierMid, 0.55)
+      fillStarTier(tierBright, 0.85)
+    }
 
     // Minor grid (10px)
     const minor = GRID_STEP / 2
-    ctx.strokeStyle = 'rgba(0,0,0,0.035)'
-    ctx.lineWidth = 0.5 / scale
-    ctx.beginPath()
-    for (let x = Math.floor(sX/minor)*minor; x <= eX; x += minor) {
-      if (x % GRID_STEP !== 0) { ctx.moveTo(x, sY); ctx.lineTo(x, eY) }
+    if (maxLineSpan / minor <= 2000) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)'
+      ctx.lineWidth = 0.5 / scale
+      ctx.beginPath()
+      for (let x = Math.floor(sX/minor)*minor; x <= eX; x += minor) {
+        if (x % GRID_STEP !== 0) { ctx.moveTo(x, sY); ctx.lineTo(x, eY) }
+      }
+      for (let y = Math.floor(sY/minor)*minor; y <= eY; y += minor) {
+        if (y % GRID_STEP !== 0) { ctx.moveTo(sX, y); ctx.lineTo(eX, y) }
+      }
+      ctx.stroke()
     }
-    for (let y = Math.floor(sY/minor)*minor; y <= eY; y += minor) {
-      if (y % GRID_STEP !== 0) { ctx.moveTo(sX, y); ctx.lineTo(eX, y) }
-    }
-    ctx.stroke()
 
     // Major grid (20px)
-    ctx.strokeStyle = 'rgba(0,0,0,0.07)'
-    ctx.lineWidth = 1 / scale
-    ctx.beginPath()
-    for (let x = sX; x <= eX; x += GRID_STEP) { ctx.moveTo(x, sY); ctx.lineTo(x, eY) }
-    for (let y = sY; y <= eY; y += GRID_STEP) { ctx.moveTo(sX, y); ctx.lineTo(eX, y) }
-    ctx.stroke()
+    if (maxLineSpan / GRID_STEP <= 2000) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)'
+      ctx.lineWidth = 1 / scale
+      ctx.beginPath()
+      for (let x = sX; x <= eX; x += GRID_STEP) { ctx.moveTo(x, sY); ctx.lineTo(x, eY) }
+      for (let y = sY; y <= eY; y += GRID_STEP) { ctx.moveTo(sX, y); ctx.lineTo(eX, y) }
+      ctx.stroke()
+    }
 
     // Grid border
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)'
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'
     ctx.lineWidth = 2 / scale
     ctx.strokeRect(0, 0, CENTRAL_W, CENTRAL_H)
 
     // Sold blocks
-    const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#1A1C24']
+    const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#F5F0E6']
     blocksRef.current.forEach(block => {
       const img = imagesRef.current.get(block.id)
       if (img && img.complete && img.naturalWidth > 0) {
@@ -699,7 +756,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     <div style={{ height: '100%', display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
 
       {/* ── LEFT: canvas workspace ── */}
-      <div style={{ flex: isMobile ? 'none' : 1, height: isMobile ? '65vh' : undefined, position: 'relative', background: '#E8E4DC', overflow: 'hidden' }}>
+      <div style={{ flex: isMobile ? 'none' : 1, height: isMobile ? '65vh' : undefined, position: 'relative', background: '#05060D', overflow: 'hidden' }}>
         <canvas
           ref={canvasRef}
           style={{ position: 'absolute', inset: 0, display: 'block', width: '100%', height: '100%', cursor: 'crosshair', touchAction: 'none' }}
@@ -757,9 +814,9 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
               onClick={() => { gestureHintRef.current = true; setShowGestureHint(true) }}
               title="Instrukcje gestów"
               style={{
-                width: 32, height: 32, border: '1px solid #E3DFD3', background: '#FAF8F2',
+                width: 32, height: 32, border: '1px solid #2A2C36', background: '#0B0C10',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#8A8676', cursor: 'pointer', padding: 0, flexShrink: 0,
+                color: '#B7B2A4', cursor: 'pointer', padding: 0, flexShrink: 0,
                 fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 14, fontWeight: 600,
               }}
             >
@@ -770,8 +827,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
             onClick={() => setSnapEnabled(v => !v)}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
-              background: '#FAF8F2', border: '1px solid #E3DFD3', padding: '7px 12px',
-              fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#8A8676',
+              background: '#0B0C10', border: '1px solid #2A2C36', padding: '7px 12px',
+              fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, color: '#B7B2A4',
               cursor: 'pointer', userSelect: 'none',
             }}
           >
@@ -786,13 +843,13 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 5,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 18px', borderTop: '1px solid #E3DFD3', background: '#FAF8F2',
-          fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 12, color: '#8A8676',
+          padding: '10px 18px', borderTop: '1px solid #2A2C36', background: '#0B0C10',
+          fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 12, color: '#B7B2A4',
         }}>
           {!isMobile && <span>Przeciągnij uchwyty, aby dopasować rozmiar — lub przewiń, by przybliżyć</span>}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => zoomBy(0.8)} style={{ width: 22, height: 22, border: '1px solid #E3DFD3', background: 'transparent', color: '#8A8676', cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-            <div style={{ position: 'relative', width: 90, height: 3, background: '#E3DFD3' }}>
+            <button onClick={() => zoomBy(0.8)} style={{ width: 22, height: 22, border: '1px solid #2A2C36', background: 'transparent', color: '#B7B2A4', cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+            <div style={{ position: 'relative', width: 90, height: 3, background: '#2A2C36' }}>
               <input
                 type="range" min={1} max={100} value={zoomPct}
                 onChange={e => zoomToSlider(Number(e.target.value))}
@@ -804,7 +861,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
                 background: '#FFD23F', borderRadius: '50%', pointerEvents: 'none',
               }} />
             </div>
-            <button onClick={() => zoomBy(1.25)} style={{ width: 22, height: 22, border: '1px solid #E3DFD3', background: 'transparent', color: '#8A8676', cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+            <button onClick={() => zoomBy(1.25)} style={{ width: 22, height: 22, border: '1px solid #2A2C36', background: 'transparent', color: '#B7B2A4', cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
             <span style={{ minWidth: 36 }}>{zoomPct}%</span>
           </div>
         </div>
