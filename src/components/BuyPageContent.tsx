@@ -10,8 +10,8 @@ import ToolModeToggle from './ToolModeToggle'
 const CENTRAL_W = 1000
 const CENTRAL_H = 1000
 const GRID_STEP = 20
-const MIN_SCALE = 0.08
-const MAX_SCALE = 6
+const MIN_SCALE = 0.001
+const MAX_SCALE = 1000
 
 
 const scaleToPct = (s: number) =>

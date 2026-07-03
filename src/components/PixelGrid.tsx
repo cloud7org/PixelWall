@@ -27,8 +27,8 @@ interface Props {
 const CENTRAL_W = 1000
 const CENTRAL_H = 1000
 const GRID_STEP = 20
-const MIN_SCALE = 0.2
-const MAX_SCALE = 8
+const MIN_SCALE = 0.001
+const MAX_SCALE = 1000
 
 export default function PixelGrid({
   onHover, onBlocksLoaded, onNewBlock, onZoomChange,
