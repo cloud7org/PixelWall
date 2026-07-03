@@ -96,15 +96,15 @@ export default function PrivacyPage() {
         {/* 1. Wstęp */}
         <h2 style={h2Style}>1. Wstęp i administrator danych</h2>
         <p style={pStyle}>
-          Pixel Wall to strona internetowa, która umożliwia zakup fragmentów cyfrowej siatki pikseli
+          Pixelverse to strona internetowa, która umożliwia zakup fragmentów cyfrowej siatki pikseli
           jako przestrzeni reklamowej. Każdy zakupiony fragment wyświetla Twoją grafikę i link
-          na stronie pixelwall.pl bezterminowo — to istota produktu. Po wysprzedaniu centralnego
+          na stronie pixelverse.pl bezterminowo — to istota produktu. Po wysprzedaniu centralnego
           obszaru siatki (1&nbsp;000&nbsp;×&nbsp;1&nbsp;000 pikseli, wyraźnie oznaczonego na mapie),
           grafiki wszystkich właścicieli z tego obszaru zostaną zaprezentowane publicznie na ekranie
           reklamowym na Times Square, Manhattan, Nowy Jork.
         </p>
         <p style={pStyle}>
-          Administratorem Twoich danych osobowych jest właściciel serwisu Pixel Wall.
+          Administratorem Twoich danych osobowych jest właściciel serwisu Pixelverse.
           We wszystkich sprawach dotyczących danych osobowych możesz się z nami skontaktować
           pod adresem: <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: '#2EE6A6' }}>{CONTACT_EMAIL}</a>.
           Odpowiadamy w ciągu 30 dni od otrzymania wiadomości.
@@ -120,7 +120,7 @@ export default function PrivacyPage() {
           <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>Nazwa właściciela</strong> — nazwa firmy, pseudonim lub imię; wyświetlana publicznie jako etykieta zakupionego bloku.</li>
           <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>URL strony docelowej</strong> — opcjonalny adres, do którego prowadzi kliknięcie w Twoją grafikę.</li>
           <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>Grafika / zdjęcie</strong> — plik obrazu wgrywany przez użytkownika i wyświetlany na siatce pikseli.</li>
-          <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>Dane transakcji</strong> — zakup obsługuje Stripe. Pixel Wall <em>nie</em> przechowuje numerów kart płatniczych ani danych BLIK — te dane trafiają wyłącznie do Stripe.</li>
+          <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>Dane transakcji</strong> — zakup obsługuje Stripe. Pixelverse <em>nie</em> przechowuje numerów kart płatniczych ani danych BLIK — te dane trafiają wyłącznie do Stripe.</li>
           <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>Dane techniczne</strong> — standardowe logi serwera (adres IP, czas dostępu) generowane automatycznie przez Netlify (hosting).</li>
         </ul>
 
@@ -133,7 +133,7 @@ export default function PrivacyPage() {
         <h3 style={h3Style}>Cel 1 — wyświetlanie reklamy na stronie internetowej</h3>
         <p style={pStyle}>
           Dane (nazwa, grafika, link, email) przetwarzamy po to, żeby zrealizować zakupioną przez
-          Ciebie usługę — wyświetlić Twoją reklamę na siatce pikseli na pixelwall.pl.
+          Ciebie usługę — wyświetlić Twoją reklamę na siatce pikseli na pixelverse.pl.
           Podstawa prawna: <strong style={{ color: '#F5F0E6' }}>art.&nbsp;6 ust.&nbsp;1 lit.&nbsp;b RODO</strong> (wykonanie umowy).
         </p>
 
@@ -230,7 +230,7 @@ export default function PrivacyPage() {
           {[
             {
               name: 'Stripe',
-              desc: 'Operator płatności. Przetwarza dane transakcji (karta, BLIK). Pixel Wall nie przechowuje danych karty — trafiają one bezpośrednio do Stripe.',
+              desc: 'Operator płatności. Przetwarza dane transakcji (karta, BLIK). Pixelverse nie przechowuje danych karty — trafiają one bezpośrednio do Stripe.',
               url: 'https://stripe.com/en-pl/privacy',
               label: 'Polityka prywatności Stripe',
             },
@@ -305,7 +305,7 @@ export default function PrivacyPage() {
         {/* 8. Cookies */}
         <h2 style={h2Style}>8. Pliki cookies</h2>
         <p style={pStyle}>
-          Pixel Wall nie używa własnych plików cookies analitycznych ani marketingowych.
+          Pixelverse nie używa własnych plików cookies analitycznych ani marketingowych.
           Nie śledzamy Cię między stronami i nie profilujemy.
         </p>
         <p style={pStyle}>

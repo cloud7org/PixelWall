@@ -4,13 +4,34 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
-const goldStyle: React.CSSProperties = {
-  background: 'linear-gradient(90deg,#b8860b 0%,#FFD23F 40%,#ffe88a 60%,#FFD23F 80%,#b8860b 100%)',
-  backgroundSize: '200% auto',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
-  animation: 'goldShimmer 6s linear infinite',
+const TAGLINE = 'YOUR PIXEL. YOUR STORY.'
+const LETTER_MS = 45
+
+function AnimatedTagline({ fontSize, baseDelayMs = 0 }: { fontSize: number; baseDelayMs?: number }) {
+  return (
+    <span
+      style={{
+        fontFamily: 'var(--font-space-grotesk), sans-serif',
+        fontWeight: 700,
+        fontSize,
+        letterSpacing: '0.02em',
+        color: '#F5F0E6',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {TAGLINE.split('').map((ch, i) => (
+        <span
+          key={i}
+          style={{
+            display: 'inline-block',
+            animation: `letterFlyIn 260ms ease-out ${baseDelayMs + i * LETTER_MS}ms both`,
+          }}
+        >
+          {ch === ' ' ? ' ' : ch}
+        </span>
+      ))}
+    </span>
+  )
 }
 
 export default function Navbar() {
@@ -37,79 +58,13 @@ export default function Navbar() {
           href="/"
           style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}
         >
-          <div
-            style={{
-              width: 26,
-              height: 26,
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gridTemplateRows: '1fr 1fr',
-              borderRadius: 3,
-              overflow: 'hidden',
-            }}
-          >
-            <div style={{ background: '#FF4D2E' }} />
-            <div style={{ background: '#2EE6A6' }} />
-            <div style={{ background: '#FFD23F' }} />
-            <div style={{ background: '#F5F0E6' }} />
-          </div>
-          <span
-            style={{
-              fontFamily: 'var(--font-space-grotesk), sans-serif',
-              fontWeight: 700,
-              fontSize: 17,
-              letterSpacing: '-0.02em',
-              color: '#F5F0E6',
-            }}
-          >
-            pixel<span style={{ color: '#FF4D2E' }}>wall</span>
-          </span>
+          <img src="/pixelverse-logo.png" alt="Pixelverse" style={{ height: 36, width: 'auto', borderRadius: 6 }} />
         </Link>
 
-        {/* Middle: headline text — clipped at both ends, never covers logo or nav items */}
-        {isMobile ? (
-          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', margin: '0 10px' }}>
-            <span
-              style={{
-                display: 'inline-block',
-                whiteSpace: 'nowrap',
-                animation: 'marqueeScroll 22s linear infinite',
-                fontFamily: 'var(--font-space-grotesk), sans-serif',
-                fontWeight: 600,
-                fontSize: 13,
-              }}
-            >
-              {/* Copy 1 */}
-              <span style={{ color: '#F5F0E6' }}>
-                Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze{'  '}
-              </span>
-              <span style={goldStyle}>— Twoje logo na Times Square w Nowym Jorku{'      '}</span>
-              {/* Copy 2 — seamless loop: translateX(-50%) = exactly one copy width */}
-              <span style={{ color: '#F5F0E6' }}>
-                Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze{'  '}
-              </span>
-              <span style={goldStyle}>— Twoje logo na Times Square w Nowym Jorku{'      '}</span>
-            </span>
-          </div>
-        ) : (
-          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', margin: '0 24px' }}>
-            <span
-              style={{
-                display: 'block',
-                fontFamily: 'var(--font-space-grotesk), sans-serif',
-                fontWeight: 600,
-                fontSize: 14,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                color: '#F5F0E6',
-              }}
-            >
-              Kup kawałek <span style={{ color: '#FF4D2E' }}>internetu</span> na zawsze{' '}
-              <span style={goldStyle}>— Twoje logo na Times Square w Nowym Jorku</span>
-            </span>
-          </div>
-        )}
+        {/* Middle: animated tagline — never covers logo or nav items */}
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textAlign: 'center', margin: isMobile ? '0 10px' : '0 24px' }}>
+          <AnimatedTagline fontSize={isMobile ? 13 : 15} baseDelayMs={isMobile ? 4000 : 0} />
+        </div>
 
         {/* Desktop: Links */}
         {!isMobile && (
@@ -178,24 +133,7 @@ export default function Navbar() {
               onClick={() => setMenuOpen(false)}
               style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}
             >
-              <div
-                style={{
-                  width: 26, height: 26,
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gridTemplateRows: '1fr 1fr',
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                }}
-              >
-                <div style={{ background: '#FF4D2E' }} />
-                <div style={{ background: '#2EE6A6' }} />
-                <div style={{ background: '#FFD23F' }} />
-                <div style={{ background: '#F5F0E6' }} />
-              </div>
-              <span style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 700, fontSize: 17, letterSpacing: '-0.02em', color: '#F5F0E6' }}>
-                pixel<span style={{ color: '#FF4D2E' }}>wall</span>
-              </span>
+              <img src="/pixelverse-logo.png" alt="Pixelverse" style={{ height: 36, width: 'auto', borderRadius: 6 }} />
             </Link>
             <button
               onClick={() => setMenuOpen(false)}

@@ -17,7 +17,7 @@ export default function HowPage() {
           color: '#5A5C66',
         }}
       >
-        <span>pixelwall — strona demonstracyjna</span>
+        <span>pixelverse — strona demonstracyjna</span>
       </footer>
     </div>
   )

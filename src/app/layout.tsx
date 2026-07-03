@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Pixel Wall — Milion pixeli, jeden internet',
+  title: 'Pixelverse — Milion pixeli, jeden internet',
   description: 'Kup kawałek internetu na zawsze. Milion pixeli, jeden dolar za pixel.',
 }
 
