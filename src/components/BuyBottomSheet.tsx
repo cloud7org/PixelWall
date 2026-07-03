@@ -12,8 +12,11 @@ interface Props {
   onSuccess: () => void
 }
 
+const PEEK_HEIGHT = 40
+
 export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess }: Props) {
   const [visible, setVisible] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const [ownerName, setOwnerName] = useState('')
   const [email, setEmail] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
@@ -23,11 +26,50 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const blocksRef = useRef<PixelBlock[]>([])
+  const sheetRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<{ startY: number; startTranslate: number; moved: boolean } | null>(null)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(id)
   }, [])
+
+  const onHandlePointerDown = (e: React.PointerEvent) => {
+    const sheet = sheetRef.current
+    if (!sheet) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    const maxTranslate = Math.max(0, sheet.offsetHeight - PEEK_HEIGHT)
+    dragRef.current = { startY: e.clientY, startTranslate: collapsed ? maxTranslate : 0, moved: false }
+    sheet.style.transition = 'none'
+  }
+
+  const onHandlePointerMove = (e: React.PointerEvent) => {
+    const drag = dragRef.current
+    const sheet = sheetRef.current
+    if (!drag || !sheet) return
+    const dy = e.clientY - drag.startY
+    if (Math.abs(dy) > 4) drag.moved = true
+    const maxTranslate = Math.max(0, sheet.offsetHeight - PEEK_HEIGHT)
+    const next = Math.min(Math.max(drag.startTranslate + dy, 0), maxTranslate)
+    sheet.style.transform = `translateY(${next}px)`
+  }
+
+  const onHandlePointerUp = (e: React.PointerEvent) => {
+    const drag = dragRef.current
+    const sheet = sheetRef.current
+    dragRef.current = null
+    if (!sheet) return
+    sheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)'
+    if (!drag) return
+    if (!drag.moved) {
+      setCollapsed(v => !v)
+      return
+    }
+    const dy = e.clientY - drag.startY
+    const maxTranslate = Math.max(0, sheet.offsetHeight - PEEK_HEIGHT)
+    const currentTranslate = Math.min(Math.max(drag.startTranslate + dy, 0), maxTranslate)
+    setCollapsed(currentTranslate > maxTranslate * 0.35)
+  }
 
   useEffect(() => {
     supabase.from('pixel_blocks').select('*').then(({ data }) => {
@@ -109,6 +151,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
 
   return (
     <div
+      ref={sheetRef}
       style={{
         position: 'fixed',
         bottom: 0,
@@ -122,13 +165,23 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
         borderTop: '2px solid #2A2C36',
         borderRadius: '16px 16px 0 0',
         paddingBottom: 'env(safe-area-inset-bottom)',
-        transform: visible ? 'translateY(0)' : 'translateY(100%)',
+        transform: !visible
+          ? 'translateY(100%)'
+          : collapsed
+          ? `translateY(calc(100% - ${PEEK_HEIGHT}px))`
+          : 'translateY(0)',
         transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
         boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
       }}
     >
-      {/* Drag handle */}
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0 2px' }}>
+      {/* Drag handle — swipe down to peek at the grid below, swipe/tap up to restore */}
+      <div
+        onPointerDown={onHandlePointerDown}
+        onPointerMove={onHandlePointerMove}
+        onPointerUp={onHandlePointerUp}
+        onPointerCancel={onHandlePointerUp}
+        style={{ display: 'flex', justifyContent: 'center', padding: '10px 0', touchAction: 'none', cursor: 'grab' }}
+      >
         <div style={{ width: 36, height: 4, background: '#2A2C36', borderRadius: 2 }} />
       </div>
 
