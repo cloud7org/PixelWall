@@ -159,7 +159,20 @@ export default function OwnersPage() {
                             style={{ objectFit: 'cover', border: `1px solid ${isFirst ? '#FFD23F' : '#2A2C36'}`, borderRadius: 4 }}
                           />
                         </td>
-                        <td style={{ padding: '12px 16px', color: isFirst ? '#FFD23F' : '#F5F0E6', fontSize: 14, fontWeight: isFirst ? 700 : 400 }}>
+                        <td
+                          title={block.owner_name ?? 'Anonimowy'}
+                          style={{
+                            padding: '12px 16px',
+                            color: isFirst ? '#FFD23F' : '#F5F0E6',
+                            fontSize: 14,
+                            fontWeight: isFirst ? 700 : 400,
+                            width: 160,
+                            maxWidth: 160,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {block.owner_name ?? 'Anonimowy'}
                         </td>
                         <td
