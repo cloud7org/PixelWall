@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { calculatePrice, formatPln } from '@/lib/pricing'
 
 export default function PriceCalculator() {
   const [w, setW] = useState(100)
   const [h, setH] = useState(80)
-  const price = w * h
+  const { price } = calculatePrice(50, 50, w, h)
 
   return (
     <section style={{ padding: '80px 48px', maxWidth: 1080, margin: '0 auto' }}>
@@ -101,7 +102,7 @@ export default function PriceCalculator() {
                 color: '#FFD23F',
               }}
             >
-              ${price.toLocaleString('en-US')}
+              {formatPln(price)}
             </span>
           </div>
 

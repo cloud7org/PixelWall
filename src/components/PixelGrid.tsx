@@ -3,6 +3,7 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
+import { CENTRAL_W, CENTRAL_H } from '@/lib/pricing'
 
 interface Props {
   onHover: (block: PixelBlock | null) => void
@@ -24,8 +25,6 @@ interface Props {
   onSelChange?: (sel: { x: number; y: number; w: number; h: number }) => void
 }
 
-const CENTRAL_W = 1000
-const CENTRAL_H = 1000
 const GRID_STEP = 20
 const MIN_SCALE = 0.001
 const MAX_SCALE = 1000
@@ -204,9 +203,24 @@ export default function PixelGrid({
       ctx.stroke()
     }
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)'
+    // Premium zone — subtle gold tint + gold border + corner label
+    ctx.fillStyle = 'rgba(255,210,63,0.05)'
+    ctx.fillRect(0, 0, CENTRAL_W, CENTRAL_H)
+    ctx.strokeStyle = 'rgba(255,210,63,0.6)'
     ctx.lineWidth = 2 / scale
     ctx.strokeRect(0, 0, CENTRAL_W, CENTRAL_H)
+    {
+      const fs = Math.max(8, 12 / scale)
+      ctx.font = `bold ${fs}px JetBrains Mono, monospace`
+      const lbl = 'STREFA PREMIUM · 0,30 zł/px'
+      const tw = ctx.measureText(lbl).width
+      const pad = 6 / scale
+      const lh = fs * 1.9
+      ctx.fillStyle = '#FFD23F'
+      ctx.fillRect(0, -lh - 2 / scale, tw + pad * 2, lh)
+      ctx.fillStyle = '#1A0A05'
+      ctx.fillText(lbl, pad, -lh - 2 / scale + lh * 0.72)
+    }
 
     // Existing blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#F5F0E6']

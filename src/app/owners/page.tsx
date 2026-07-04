@@ -7,6 +7,7 @@ import BackToGridCornerButton from '@/components/BackToGridCornerButton'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { calculatePrice, formatPln } from '@/lib/pricing'
 
 function safeHref(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
@@ -205,7 +206,7 @@ export default function OwnersPage() {
                             fontWeight: 600,
                           }}
                         >
-                          {(block.width * block.height).toLocaleString('pl-PL')} zł
+                          {formatPln(calculatePrice(block.x, block.y, block.width, block.height).price)}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
                           {block.link_url ? (

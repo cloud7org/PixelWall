@@ -1,14 +1,13 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import ToolModeToggle from './ToolModeToggle'
+import { CENTRAL_W, CENTRAL_H, calculatePrice, formatPln } from '@/lib/pricing'
 
-const CENTRAL_W = 1000
-const CENTRAL_H = 1000
 const GRID_STEP = 20
 const MIN_SCALE = 0.001
 const MAX_SCALE = 1000
@@ -59,7 +58,6 @@ function applyResize(handle: Handle, start: Sel, gdx: number, gdy: number, snap:
 
 export default function BuyPageContent({ onClose, initialSel }: { onClose?: () => void; initialSel?: { x: number; y: number; w: number; h: number } } = {}) {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const { isMobile } = useBreakpoint()
 
   const initW = Math.max(10, Number(searchParams.get('w') ?? 10))
@@ -117,10 +115,10 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const [selH, setSelH]             = useState(String(defaultSel.h))
   const [uploading, setUploading]   = useState(false)
   const [error, setError]           = useState<string | null>(null)
-  const [success, setSuccess]       = useState(false)
   const [showGestureHint, setShowGestureHint] = useState(true)
 
-  const price = sel.w * sel.h
+  const { premiumPixels, standardPixels, totalPixels, premiumSubtotal, standardSubtotal, price } =
+    calculatePrice(sel.x, sel.y, sel.w, sel.h)
 
   // Sync refs with state
   useEffect(() => {
@@ -251,10 +249,24 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
       ctx.stroke()
     }
 
-    // Grid border
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)'
+    // Premium zone — subtle gold tint + gold border + corner label
+    ctx.fillStyle = 'rgba(255,210,63,0.05)'
+    ctx.fillRect(0, 0, CENTRAL_W, CENTRAL_H)
+    ctx.strokeStyle = 'rgba(255,210,63,0.6)'
     ctx.lineWidth = 2 / scale
     ctx.strokeRect(0, 0, CENTRAL_W, CENTRAL_H)
+    {
+      const fs = Math.max(8, 12 / scale)
+      ctx.font = `bold ${fs}px JetBrains Mono, monospace`
+      const lbl = 'STREFA PREMIUM · 0,30 zł/px'
+      const tw = ctx.measureText(lbl).width
+      const pad = 6 / scale
+      const lh = fs * 1.9
+      ctx.fillStyle = '#FFD23F'
+      ctx.fillRect(0, -lh - 2 / scale, tw + pad * 2, lh)
+      ctx.fillStyle = '#1A0A05'
+      ctx.fillText(lbl, pad, -lh - 2 / scale + lh * 0.72)
+    }
 
     // Sold blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#F5F0E6']
@@ -713,33 +725,24 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
       const { error: upErr } = await supabase.storage.from('pixel-images').upload(`${id}.png`, resized, { contentType: 'image/png' })
       if (upErr) throw new Error(upErr.message)
       const { data: urlData } = supabase.storage.from('pixel-images').getPublicUrl(`${id}.png`)
-      const { error: insErr } = await supabase.from('pixel_blocks').insert({
-        id, x: sel.x, y: sel.y, width: sel.w, height: sel.h,
-        image_url: urlData.publicUrl, link_url: linkUrl || null,
-        owner_name: ownerName || null, alt_text: altText || null, email,
-        privacy_consent: true, privacy_consent_at: new Date().toISOString(),
+      const res = await fetch('/api/checkout/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          x: sel.x, y: sel.y, w: sel.w, h: sel.h,
+          imageUrl: urlData.publicUrl, linkUrl: linkUrl || null,
+          ownerName: ownerName || null, altText: altText || null, email,
+        }),
       })
-      if (insErr) throw new Error(insErr.message)
-      setSuccess(true)
-      setTimeout(() => { if (onClose) onClose(); else router.push('/') }, 2500)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Nie udało się utworzyć płatności.')
+      window.location.href = data.url
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nieznany błąd')
-    } finally {
       setUploading(false)
     }
   }
 
-  // ─── SUCCESS ───────────────────────────────────────────────────────────────
-
-  if (success) {
-    return (
-      <div style={{ height: '100%', background: '#0B0C10', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-        <div style={{ fontSize: 48 }}>🎉</div>
-        <h2 style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', color: '#2EE6A6', fontSize: 28, fontWeight: 700 }}>Piksele są Twoje!</h2>
-        <p style={{ color: '#B7B2A4', fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 13 }}>Wracam na siatkę…</p>
-      </div>
-    )
-  }
 
   const isOverlap = hasOverlap(sel.x, sel.y, sel.w, sel.h)
 
@@ -985,8 +988,12 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         {/* Price summary */}
         <div style={{ background: '#1A1C24', border: '1px solid #2A2C36', padding: 16, marginBottom: 18 }}>
           {[
-            { label: 'Obszar',        val: `${sel.w} × ${sel.h} px` },
-            { label: 'Liczba pikseli',val: price.toLocaleString('pl-PL') },
+            { label: 'Obszar',         val: `${sel.w} × ${sel.h} px` },
+            { label: 'Liczba pikseli', val: totalPixels.toLocaleString('pl-PL') },
+            ...(premiumPixels > 0 && standardPixels > 0 ? [
+              { label: 'Piksele premium (0,30 zł/px)',  val: formatPln(premiumSubtotal) },
+              { label: 'Piksele standard (0,01 zł/px)', val: formatPln(standardSubtotal) },
+            ] : []),
           ].map(({ label, val }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#B7B2A4', padding: '6px 0', borderBottom: '1px solid #1F212B' }}>
               <span>{label}</span>
@@ -995,7 +1002,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12 }}>
             <span style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 600, fontSize: 14, color: '#F5F0E6' }}>Do zapłaty</span>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 26, color: '#2EE6A6' }}>{price.toLocaleString('pl-PL')} zł</span>
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 26, color: '#2EE6A6' }}>{formatPln(price)}</span>
           </div>
         </div>
 

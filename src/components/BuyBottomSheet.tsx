@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
+import { calculatePrice, formatPln } from '@/lib/pricing'
 
 interface Props {
   sel: { x: number; y: number; w: number; h: number }
@@ -24,7 +25,6 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   const [privacyConsent, setPrivacyConsent] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const blocksRef = useRef<PixelBlock[]>([])
   const sheetRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ startY: number; startTranslate: number; moved: boolean } | null>(null)
@@ -77,7 +77,8 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
     })
   }, [])
 
-  const price = sel.w * sel.h
+  const { premiumPixels, standardPixels, premiumSubtotal, standardSubtotal, price } =
+    calculatePrice(sel.x, sel.y, sel.w, sel.h)
 
   const hasOverlap = () =>
     blocksRef.current.some(
@@ -110,18 +111,20 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
       const { error: upErr } = await supabase.storage.from('pixel-images').upload(`${id}.png`, resized, { contentType: 'image/png' })
       if (upErr) throw new Error(upErr.message)
       const { data: urlData } = supabase.storage.from('pixel-images').getPublicUrl(`${id}.png`)
-      const { error: insErr } = await supabase.from('pixel_blocks').insert({
-        id, x: sel.x, y: sel.y, width: sel.w, height: sel.h,
-        image_url: urlData.publicUrl, link_url: linkUrl || null,
-        owner_name: ownerName || null, alt_text: altText || null, email,
-        privacy_consent: true, privacy_consent_at: new Date().toISOString(),
+      const res = await fetch('/api/checkout/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          x: sel.x, y: sel.y, w: sel.w, h: sel.h,
+          imageUrl: urlData.publicUrl, linkUrl: linkUrl || null,
+          ownerName: ownerName || null, altText: altText || null, email,
+        }),
       })
-      if (insErr) throw new Error(insErr.message)
-      setSuccess(true)
-      setTimeout(() => onSuccess(), 1800)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Nie udało się utworzyć płatności.')
+      window.location.href = data.url
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nieznany błąd')
-    } finally {
       setUploading(false)
     }
   }
@@ -185,32 +188,11 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
         <div style={{ width: 36, height: 4, background: '#2A2C36', borderRadius: 2 }} />
       </div>
 
-      {success ? (
-        <div style={{ padding: '8px 20px 16px', textAlign: 'center' }}>
-          <div style={{ fontSize: 28, marginBottom: 4 }}>🎉</div>
-          <h3 style={{
-            fontFamily: 'var(--font-space-grotesk), sans-serif',
-            color: '#2EE6A6',
-            fontSize: 18,
-            fontWeight: 700,
-            marginBottom: 4,
-          }}>
-            Piksele są Twoje!
-          </h3>
-          <p style={{
-            color: '#B7B2A4',
-            fontFamily: 'var(--font-jetbrains-mono), monospace',
-            fontSize: 11,
-          }}>
-            Wracam na siatkę…
-          </p>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           {/* Scrollable area: header + fields */}
           <div style={{ overflowY: 'auto', flex: 1, padding: '4px 16px 0' }}>
           {/* Header row: area info + price + close */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: premiumPixels > 0 && standardPixels > 0 ? 2 : 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <span style={{
                 color: '#B7B2A4',
@@ -229,7 +211,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
               fontSize: 18,
               flexShrink: 0,
             }}>
-              {price.toLocaleString('pl-PL')} zł
+              {formatPln(price)}
             </span>
             <button
               type="button"
@@ -250,6 +232,17 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
               ×
             </button>
           </div>
+
+          {premiumPixels > 0 && standardPixels > 0 && (
+            <div style={{
+              color: '#5A5C66',
+              fontFamily: 'var(--font-jetbrains-mono), monospace',
+              fontSize: 10,
+              marginBottom: 8,
+            }}>
+              Premium: {formatPln(premiumSubtotal)} · Standard: {formatPln(standardSubtotal)}
+            </div>
+          )}
 
           {/* Form fields — compact 3-column on wide, 1-column on narrow */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -357,7 +350,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
           </button>
           </div>{/* end sticky footer */}
         </form>
-      )}
     </div>
   )
 }
+
