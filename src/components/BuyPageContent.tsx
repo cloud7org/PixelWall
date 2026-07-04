@@ -7,6 +7,7 @@ import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import ToolModeToggle from './ToolModeToggle'
 import { CENTRAL_W, CENTRAL_H, calculatePrice, formatPln } from '@/lib/pricing'
+import { drawPremiumZone } from '@/lib/drawPremiumZone'
 
 const GRID_STEP = 20
 const MIN_SCALE = 0.001
@@ -72,6 +73,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const dprRef         = useRef(1)
   const rafRef         = useRef<number | null>(null)
   const initializedRef = useRef(false)
+  const mountTimeRef   = useRef(performance.now())
   const selRef         = useRef<Sel>(defaultSel)
   const isOverlapRef   = useRef(false)
 
@@ -249,24 +251,8 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
       ctx.stroke()
     }
 
-    // Premium zone — subtle gold tint + gold border + corner label
-    ctx.fillStyle = 'rgba(255,210,63,0.05)'
-    ctx.fillRect(0, 0, CENTRAL_W, CENTRAL_H)
-    ctx.strokeStyle = 'rgba(255,210,63,0.6)'
-    ctx.lineWidth = 2 / scale
-    ctx.strokeRect(0, 0, CENTRAL_W, CENTRAL_H)
-    {
-      const fs = Math.max(8, 12 / scale)
-      ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-      const lbl = 'STREFA PREMIUM · 0,30 zł/px'
-      const tw = ctx.measureText(lbl).width
-      const pad = 6 / scale
-      const lh = fs * 1.9
-      ctx.fillStyle = '#FFD23F'
-      ctx.fillRect(0, -lh - 2 / scale, tw + pad * 2, lh)
-      ctx.fillStyle = '#1A0A05'
-      ctx.fillText(lbl, pad, -lh - 2 / scale + lh * 0.72)
-    }
+    // Premium zone — gold tint + shimmer + border + corner label
+    drawPremiumZone(ctx, scale, performance.now() - mountTimeRef.current)
 
     // Sold blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#F5F0E6']
@@ -342,6 +328,14 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const scheduleRedraw = useCallback(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(() => { draw(); rafRef.current = null })
+  }, [draw])
+
+  // Continuous animation loop — keeps the premium zone shimmer moving
+  useEffect(() => {
+    let raf: number
+    const loop = () => { draw(); raf = requestAnimationFrame(loop) }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
   }, [draw])
 
   // Recompute overlap + redraw when sel changes

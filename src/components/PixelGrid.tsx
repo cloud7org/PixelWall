@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { CENTRAL_W, CENTRAL_H } from '@/lib/pricing'
+import { drawPremiumZone } from '@/lib/drawPremiumZone'
 
 interface Props {
   onHover: (block: PixelBlock | null) => void
@@ -48,9 +49,10 @@ export default function PixelGrid({
   const activePtrsRef = useRef<Map<number, { x: number; y: number }>>(new Map())
   const pinchRef = useRef<{ dist: number; cx: number; cy: number } | null>(null)
   const showHintRef = useRef(false)
-  const hintRafRef = useRef<number | null>(null)
+  const hintExpiredRef = useRef(false)
   const hintStartRef = useRef(0)
-  const hintPosRef = useRef<{ x: number; y: number } | null>({ x: 60, y: 60 })
+  const mountTimeRef = useRef(0)
+  const hintPosRef = useRef<{ x: number; y: number } | null>({ x: 60, y: CENTRAL_H + GRID_STEP + 60 })
   const lastTapRef = useRef<{ time: number; cx: number; cy: number } | null>(null)
   const drawSelRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
   const isDrawingRef = useRef(false)
@@ -85,7 +87,9 @@ export default function PixelGrid({
 
   const findFreeHintPos = useCallback((): { x: number; y: number } | null => {
     const HW = 40, HH = 40
-    for (let y = 0; y <= CENTRAL_H - HH; y += GRID_STEP) {
+    // Search just below the premium zone so the hint never overlaps the gold shimmer.
+    const searchY0 = CENTRAL_H + GRID_STEP
+    for (let y = searchY0; y <= searchY0 + 400; y += GRID_STEP) {
       for (let x = 0; x <= CENTRAL_W - HW; x += GRID_STEP) {
         const free = !blocksRef.current.some(
           b => x < b.x + b.width && x + HW > b.x && y < b.y + b.height && y + HH > b.y
@@ -203,24 +207,8 @@ export default function PixelGrid({
       ctx.stroke()
     }
 
-    // Premium zone — subtle gold tint + gold border + corner label
-    ctx.fillStyle = 'rgba(255,210,63,0.05)'
-    ctx.fillRect(0, 0, CENTRAL_W, CENTRAL_H)
-    ctx.strokeStyle = 'rgba(255,210,63,0.6)'
-    ctx.lineWidth = 2 / scale
-    ctx.strokeRect(0, 0, CENTRAL_W, CENTRAL_H)
-    {
-      const fs = Math.max(8, 12 / scale)
-      ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-      const lbl = 'STREFA PREMIUM · 0,30 zł/px'
-      const tw = ctx.measureText(lbl).width
-      const pad = 6 / scale
-      const lh = fs * 1.9
-      ctx.fillStyle = '#FFD23F'
-      ctx.fillRect(0, -lh - 2 / scale, tw + pad * 2, lh)
-      ctx.fillStyle = '#1A0A05'
-      ctx.fillText(lbl, pad, -lh - 2 / scale + lh * 0.72)
-    }
+    // Premium zone — gold tint + shimmer + border + corner label
+    drawPremiumZone(ctx, scale, performance.now() - mountTimeRef.current)
 
     // Existing blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#F5F0E6']
@@ -293,7 +281,7 @@ export default function PixelGrid({
     }
 
     // Animated hint rectangle
-    if (showHintRef.current) {
+    if (showHintRef.current && !hintExpiredRef.current) {
       const hp = hintPosRef.current
       if (hp) {
         const elapsed = performance.now() - hintStartRef.current
@@ -367,18 +355,21 @@ export default function PixelGrid({
     draftImgRef.current = img
   }, [draftImageUrl, scheduleRedraw])
 
-  // Continuous animation loop for the hint pulse
+  // Hint pulse timing + hard 4s expiry (independent of the showHint prop toggling)
   useEffect(() => {
-    if (!showHint) {
-      if (hintRafRef.current !== null) { cancelAnimationFrame(hintRafRef.current); hintRafRef.current = null }
-      scheduleRedraw()
-      return
-    }
     hintStartRef.current = performance.now()
-    const loop = () => { draw(); hintRafRef.current = requestAnimationFrame(loop) }
-    hintRafRef.current = requestAnimationFrame(loop)
-    return () => { if (hintRafRef.current !== null) { cancelAnimationFrame(hintRafRef.current); hintRafRef.current = null } }
-  }, [showHint, draw, scheduleRedraw])
+    mountTimeRef.current = performance.now()
+    const t = setTimeout(() => { hintExpiredRef.current = true }, 4000)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Continuous animation loop — drives both the hint pulse and the premium zone shimmer
+  useEffect(() => {
+    let raf: number
+    const loop = () => { draw(); raf = requestAnimationFrame(loop) }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [draw])
 
   const resize = useCallback(() => {
     const canvas = canvasRef.current
