@@ -185,7 +185,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
         onPointerCancel={onHandlePointerUp}
         style={{ display: 'flex', justifyContent: 'center', padding: '10px 0', touchAction: 'none', cursor: 'grab' }}
       >
-        <div style={{ width: 36, height: 4, background: '#2A2C36', borderRadius: 2 }} />
+        <div style={{ width: 36, height: 4, background: '#2EE6A6', borderRadius: 2, boxShadow: '0 0 8px rgba(46,230,166,0.7)' }} />
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>

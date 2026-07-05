@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar'
 import BackToGridLink from '@/components/BackToGridLink'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
-const CONTACT_EMAIL = 'alex.mleczkomt@gmail.com'
+const CONTACT_EMAIL = 'cloud7.org@gmail.com'
 const UPDATED_AT = '1 lipca 2025'
 
 export default function PrivacyPage() {
@@ -98,15 +98,15 @@ export default function PrivacyPage() {
         {/* 1. Wstęp */}
         <h2 style={h2Style}>1. Wstęp i administrator danych</h2>
         <p style={pStyle}>
-          Pixelverse to strona internetowa, która umożliwia zakup fragmentów cyfrowej siatki pikseli
-          jako przestrzeni reklamowej. Każdy zakupiony fragment wyświetla Twoją grafikę i link
-          na stronie pixelverse.pl bezterminowo — to istota produktu. Po wysprzedaniu centralnego
+          Pixora to strona internetowa, która umożliwia zakup fragmentów cyfrowej siatki pikseli.
+          Każdy zakupiony fragment wyświetla Twoją grafikę i link
+          na stronie NAZWA_STRONY bezterminowo — to istota produktu. Po wysprzedaniu centralnego
           obszaru siatki (1&nbsp;000&nbsp;×&nbsp;1&nbsp;000 pikseli, wyraźnie oznaczonego na mapie),
           grafiki wszystkich właścicieli z tego obszaru zostaną zaprezentowane publicznie na ekranie
-          reklamowym na Times Square, Manhattan, Nowy Jork.
+          reklamowym na Times Square, Manhattan, Nowy Jork, w formie kolarzu. 
         </p>
         <p style={pStyle}>
-          Administratorem Twoich danych osobowych jest właściciel serwisu Pixelverse.
+          Administratorem Twoich danych osobowych jest właściciel serwisu Pixora.
           We wszystkich sprawach dotyczących danych osobowych możesz się z nami skontaktować
           pod adresem: <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: '#2EE6A6' }}>{CONTACT_EMAIL}</a>.
           Odpowiadamy w ciągu 30 dni od otrzymania wiadomości.
@@ -132,10 +132,10 @@ export default function PrivacyPage() {
         <h2 style={h2Style}>3. Cel i podstawa prawna przetwarzania</h2>
         <p style={pStyle}>Przetwarzamy Twoje dane w dwóch odrębnych celach, z różną podstawą prawną:</p>
 
-        <h3 style={h3Style}>Cel 1 — wyświetlanie reklamy na stronie internetowej</h3>
+        <h3 style={h3Style}>Cel 1 — wyświetlanie obrazu na stronie internetowej</h3>
         <p style={pStyle}>
           Dane (nazwa, grafika, link, email) przetwarzamy po to, żeby zrealizować zakupioną przez
-          Ciebie usługę — wyświetlić Twoją reklamę na siatce pikseli na pixelverse.pl.
+          Ciebie usługę — wyświetlić Twój obraz na siatce pikseli na NAZWA_STRONY.
           Podstawa prawna: <strong style={{ color: '#F5F0E6' }}>art.&nbsp;6 ust.&nbsp;1 lit.&nbsp;b RODO</strong> (wykonanie umowy).
         </p>
 
@@ -158,7 +158,7 @@ export default function PrivacyPage() {
         {/* 4. Jak długo przechowujemy */}
         <h2 style={h2Style}>4. Jak długo przechowujemy dane</h2>
         <ul style={{ paddingLeft: 20, marginBottom: 14 }}>
-          <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>Grafika i zajęty obszar na siatce</strong> — bezterminowo. To wynika z istoty produktu: obiecujemy, że Twoja reklama zostaje na zawsze. Usunięcie grafiki z siatki naruszyłoby tę obietnicę i integralność całej mapy.</li>
+          <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>Grafika i zajęty obszar na siatce</strong> — 10 lat w formie pierwotnej. Po tym czasie strona staje się statyczna.</li>
           <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>Adres e-mail i nazwa</strong> — przechowywane do czasu, gdy złożysz żądanie ich usunięcia (patrz sekcja 7), lub dłużej, jeśli jest to niezbędne do obsługi ewentualnych roszczeń.</li>
           <li style={liStyle}><strong style={{ color: '#F5F0E6' }}>Logi serwera (Netlify)</strong> — zgodnie z polityką prywatności Netlify.</li>
         </ul>
@@ -187,11 +187,6 @@ export default function PrivacyPage() {
             1&nbsp;000&nbsp;×&nbsp;1&nbsp;000 px — nie chodzi o całą nieskończoną siatkę, tylko
             o ten wyraźnie oznaczony fragment), grafiki wszystkich właścicieli z tego obszaru
             zostaną wyświetlone na ekranie reklamowym na Times Square, Manhattan, Nowy Jork.
-          </p>
-
-          <p style={pStyle}>
-            Wyświetlenie ma formę animacji: każda grafika pojawi się na ekranie przez kilka sekund
-            w kolejności. Całość zostanie nagrana i udostępniona właścicielom.
           </p>
 
           <div style={boxStyle}>
@@ -275,8 +270,8 @@ export default function PrivacyPage() {
         </p>
         <p style={pStyle}>
           Wyjątek: sama grafika i zajęty przez Ciebie obszar na siatce <strong style={{ color: '#F5F0E6' }}>pozostają</strong>.
-          Usunięcie bloku z siatki oznaczałoby naruszenie obietnicy „Twoja reklama zostaje na zawsze"
-          i wpłynęłoby na integralność mapy widzianej przez wszystkich. Jeśli Twój blok jest
+          Usunięcie bloku z siatki oznaczałoby naruszenie i wpłynęłoby na 
+          integralność mapy widzianej przez wszystkich. Jeśli Twój blok jest
           w centralnym obszarze i wyświetlenie na Times Square już nastąpiło — usunięcie grafiki
           z bazy danych nie cofa ekspozycji w przestrzeni fizycznej.
         </p>
@@ -307,7 +302,7 @@ export default function PrivacyPage() {
         {/* 8. Cookies */}
         <h2 style={h2Style}>8. Pliki cookies</h2>
         <p style={pStyle}>
-          Pixelverse nie używa własnych plików cookies analitycznych ani marketingowych.
+          Pixora nie używa własnych plików cookies analitycznych ani marketingowych.
           Nie śledzamy Cię między stronami i nie profilujemy.
         </p>
         <p style={pStyle}>
