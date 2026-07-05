@@ -23,6 +23,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   const [linkUrl, setLinkUrl] = useState('')
   const [altText, setAltText] = useState('')
   const [privacyConsent, setPrivacyConsent] = useState(false)
+  const [termsConsent, setTermsConsent]     = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const blocksRef = useRef<PixelBlock[]>([])
@@ -92,6 +93,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
     if (!ownerName.trim()) { setError('Podaj nazwę właściciela.'); return }
     if (!email.trim()) { setError('Podaj adres e-mail.'); return }
     if (!privacyConsent) { setError('Zaakceptuj politykę prywatności, aby kontynuować.'); return }
+    if (!termsConsent)   { setError('Zaakceptuj regulamin serwisu, aby kontynuować.'); return }
     if (hasOverlap()) { setError('Ten obszar nakłada się na istniejący blok. Wybierz inne miejsce.'); return }
 
     setUploading(true)
@@ -314,6 +316,25 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
             </span>
           </label>
 
+          {/* Checkbox regulaminu */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', marginBottom: 10 }}>
+            <input
+              type="checkbox"
+              checked={termsConsent}
+              onChange={e => setTermsConsent(e.target.checked)}
+              style={{ marginTop: 2, flexShrink: 0, accentColor: '#2EE6A6', width: 14, height: 14 }}
+            />
+            <span style={{ color: '#B7B2A4', fontSize: 11, fontFamily: 'var(--font-jetbrains-mono), monospace', lineHeight: 1.5 }}>
+              Akceptuję{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                style={{ color: '#2EE6A6', textDecoration: 'underline' }}>
+                regulamin serwisu
+              </a>
+              {' '}i przyjmuję do wiadomości, że po potwierdzeniu płatności tracę prawo do odstąpienia od umowy zgodnie z art. 38 pkt 13 ustawy o prawach konsumenta.
+            </span>
+          </label>
+
           {error && (
             <div style={{
               color: '#FF4D2E',
@@ -331,18 +352,18 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
 
           <button
             type="submit"
-            disabled={uploading || !privacyConsent}
+            disabled={uploading || !privacyConsent || !termsConsent}
             style={{
               width: '100%',
-              background: uploading || !privacyConsent ? '#1A1C24' : '#2EE6A6',
-              color: uploading || !privacyConsent ? '#5A5C66' : '#1A0A05',
+              background: uploading || !privacyConsent || !termsConsent ? '#1A1C24' : '#2EE6A6',
+              color: uploading || !privacyConsent || !termsConsent ? '#5A5C66' : '#1A0A05',
               fontFamily: 'var(--font-space-grotesk), sans-serif',
               fontWeight: 700,
               fontSize: 15,
               padding: '10px 16px',
               border: 'none',
               borderRadius: 6,
-              cursor: uploading || !privacyConsent ? 'not-allowed' : 'pointer',
+              cursor: uploading || !privacyConsent || !termsConsent ? 'not-allowed' : 'pointer',
               transition: 'background 0.2s ease',
             }}
           >
