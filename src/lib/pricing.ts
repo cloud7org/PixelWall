@@ -4,7 +4,7 @@ export const CENTRAL_H = 1000
 export const PREMIUM_PLN_PER_PX = 0.3
 export const PREMIUM_MIN_PLN = 100
 export const STANDARD_PLN_PER_PX = 0.01
-export const STANDARD_MIN_PLN = 10
+export const STANDARD_MIN_PLN = 15
 
 export function calculatePrice(x: number, y: number, w: number, h: number) {
   const overlapW = Math.max(0, Math.min(x + w, CENTRAL_W) - Math.max(x, 0))
