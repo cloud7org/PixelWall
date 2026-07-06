@@ -299,9 +299,9 @@ export default function PixelGrid({
         ctx.lineDashOffset = 0
         const fs = Math.max(8, 14 / scale)
         ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-        const lbl = isMobileRef.current
-          ? (toolModeRef.current === 'draw' ? 'Przeciągnij palcem, aby wybrać obszar' : 'Włącz "Zaznacz", aby wybrać obszar')
-          : 'Kliknij 2 razy na wolny obszar'
+        const lbl = toolModeRef.current === 'draw'
+          ? (isMobileRef.current ? 'Przeciągnij palcem, aby wybrać obszar' : 'Przeciągnij myszką, aby wybrać obszar')
+          : 'Włącz "Zaznacz", aby wybrać obszar'
         const tw = ctx.measureText(lbl).width
         const pad = 2 / scale
         const lh = fs * 1.7
@@ -569,46 +569,46 @@ export default function PixelGrid({
       dragMovedRef.current = false
       lastPtrRef.current = { x: e.clientX, y: e.clientY }
 
-      if (e.pointerType === 'touch') {
-        const rect = canvas.getBoundingClientRect()
-        const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
-        const { scale } = viewRef.current
+      const rect = canvas.getBoundingClientRect()
+      const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
+      const { scale } = viewRef.current
 
-        // Draft mode: check corner handles then body
-        const ds = draftSelRef.current
-        if (ds) {
-          const HIT = 24 / scale
-          const corners: { id: 'nw' | 'ne' | 'sw' | 'se'; gx: number; gy: number }[] = [
-            { id: 'nw', gx: ds.x, gy: ds.y },
-            { id: 'ne', gx: ds.x + ds.w, gy: ds.y },
-            { id: 'sw', gx: ds.x, gy: ds.y + ds.h },
-            { id: 'se', gx: ds.x + ds.w, gy: ds.y + ds.h },
-          ]
-          for (const h of corners) {
-            if (Math.hypot(lx - h.gx, ly - h.gy) < HIT) {
-              draftDragRef.current = {
-                mode: h.id,
-                startGridX: snap(Math.round(lx)),
-                startGridY: snap(Math.round(ly)),
-                startSel: { ...ds },
-              }
-              return
-            }
-          }
-          if (lx >= ds.x && lx <= ds.x + ds.w && ly >= ds.y && ly <= ds.y + ds.h) {
+      // Draft image mode: check corner handles then body — shared by touch and mouse
+      const ds = draftSelRef.current
+      if (ds && (e.pointerType === 'touch' || e.button !== 2)) {
+        const HIT = 24 / scale
+        const corners: { id: 'nw' | 'ne' | 'sw' | 'se'; gx: number; gy: number }[] = [
+          { id: 'nw', gx: ds.x, gy: ds.y },
+          { id: 'ne', gx: ds.x + ds.w, gy: ds.y },
+          { id: 'sw', gx: ds.x, gy: ds.y + ds.h },
+          { id: 'se', gx: ds.x + ds.w, gy: ds.y + ds.h },
+        ]
+        for (const h of corners) {
+          if (Math.hypot(lx - h.gx, ly - h.gy) < HIT) {
             draftDragRef.current = {
-              mode: 'move',
+              mode: h.id,
               startGridX: snap(Math.round(lx)),
               startGridY: snap(Math.round(ly)),
               startSel: { ...ds },
             }
             return
           }
-          // Outside draft: pan
-          isDraggingRef.current = true
+        }
+        if (lx >= ds.x && lx <= ds.x + ds.w && ly >= ds.y && ly <= ds.y + ds.h) {
+          draftDragRef.current = {
+            mode: 'move',
+            startGridX: snap(Math.round(lx)),
+            startGridY: snap(Math.round(ly)),
+            startSel: { ...ds },
+          }
           return
         }
+        // Outside draft: pan
+        isDraggingRef.current = true
+        return
+      }
 
+      if (e.pointerType === 'touch') {
         // Double-tap on empty area: jump straight into drawing a selection,
         // even while in pan mode — and sync the mode toggle to "Zaznacz".
         const tapCx = e.clientX - rect.left, tapCy = e.clientY - rect.top
@@ -650,14 +650,30 @@ export default function PixelGrid({
           canvas.style.cursor = 'crosshair'
         }
       } else {
-        // Mouse: pan
-        isDraggingRef.current = true
-        isDrawingRef.current = false
-        if (e.button === 2) { canvas.style.cursor = 'grabbing'; return }
-        const rect = canvas.getBoundingClientRect()
-        const { lx, ly } = toLogical(e.clientX - rect.left, e.clientY - rect.top)
+        // Mouse
+        if (e.button === 2) {
+          isDraggingRef.current = true
+          isDrawingRef.current = false
+          canvas.style.cursor = 'grabbing'
+          return
+        }
         const hitBlock = hitTest(lx, ly)
-        canvas.style.cursor = hitBlock ? 'grabbing' : 'crosshair'
+
+        if (toolModeRef.current === 'draw' && !hitBlock) {
+          // Select mode (toggle button): drag to draw a selection rectangle, like touch
+          isDraggingRef.current = false
+          isDrawingRef.current = true
+          const sx = snap(Math.round(lx))
+          const sy = snap(Math.round(ly))
+          drawStartGridRef.current = { x: sx, y: sy }
+          drawSelRef.current = { x: sx, y: sy, w: 10, h: 10 }
+          canvas.style.cursor = 'crosshair'
+        } else {
+          // Pan mode, or clicking an existing block
+          isDraggingRef.current = true
+          isDrawingRef.current = false
+          canvas.style.cursor = hitBlock ? 'grabbing' : 'crosshair'
+        }
       }
     }
 

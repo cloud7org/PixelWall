@@ -98,6 +98,10 @@ export default function CanvasToolbar({ zoomPct, onZoomChange, onFullscreen, too
         userSelect: 'none',
       }}
     >
+      {showToolModeToggle && toolMode && onToolModeChange && (
+        <ToolModeToggle mode={toolMode} onChange={onToolModeChange} />
+      )}
+
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
         <div style={{ position: 'relative', width: 90, height: 3, background: '#2A2C36' }}>
           <input
