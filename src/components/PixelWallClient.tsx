@@ -10,6 +10,7 @@ import BuyBottomSheet from './BuyBottomSheet'
 import BlockTooltip from './BlockTooltip'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { PREMIUM_PLN_PER_PX, STANDARD_PLN_PER_PX, formatPln } from '@/lib/pricing'
 
 export default function PixelWallClient() {
   const { isMobile } = useBreakpoint()
@@ -240,6 +241,22 @@ export default function PixelWallClient() {
                 <span style={{ color: '#B7B2A4', fontSize: 11 }}>{action}</span>
               </div>
             ))}
+
+            <div style={{ width: '100%', marginTop: 8, paddingTop: 14, borderTop: '1px solid #2A2C36' }}>
+              <p style={{ color: '#2EE6A6', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 10px' }}>
+                CENY
+              </p>
+              {([
+                ['Strefa Time Square', `${formatPln(PREMIUM_PLN_PER_PX)} / pixel`],
+                ['Strefa Standard',    `${formatPln(STANDARD_PLN_PER_PX)} / pixel`],
+              ] as const).map(([zone, price]) => (
+                <div key={zone} style={{ display: 'flex', width: '100%', gap: 8, marginBottom: 10, alignItems: 'baseline' }}>
+                  <span style={{ color: '#F5F0E6', fontSize: 11, flexShrink: 0, minWidth: 148 }}>{zone}</span>
+                  <span style={{ color: '#5A5C66', fontSize: 11 }}>→</span>
+                  <span style={{ color: '#B7B2A4', fontSize: 11 }}>{price}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

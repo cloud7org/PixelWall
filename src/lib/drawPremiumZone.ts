@@ -67,7 +67,7 @@ export function drawPremiumZone(ctx: CanvasRenderingContext2D, scale: number, el
 
   const fs = Math.max(8, 12 / scale)
   ctx.font = `bold ${fs}px JetBrains Mono, monospace`
-  const lbl = 'STREFA TIME SQUARE · 0,30 zł/px'
+  const lbl = 'STREFA TIME SQUARE'
   const tw = ctx.measureText(lbl).width
   const pad = 6 / scale
   const lh = fs * 1.9
