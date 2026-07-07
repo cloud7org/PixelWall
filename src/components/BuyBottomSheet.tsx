@@ -11,13 +11,16 @@ interface Props {
   imageUrl: string
   onClose: () => void
   onSuccess: () => void
+  onSelChange?: (sel: { x: number; y: number; w: number; h: number }) => void
 }
 
 const PEEK_HEIGHT = 40
 
-export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess }: Props) {
+export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess, onSelChange }: Props) {
   const [visible, setVisible] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const [widthInput, setWidthInput] = useState(String(sel.w))
+  const [heightInput, setHeightInput] = useState(String(sel.h))
   const [ownerName, setOwnerName] = useState('')
   const [email, setEmail] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
@@ -34,6 +37,29 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
     const id = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(id)
   }, [])
+
+  // Keep the width/height inputs in sync when the selection changes from elsewhere
+  // (e.g. dragging the corner handles of the draft rectangle on the canvas).
+  useEffect(() => { setWidthInput(String(sel.w)) }, [sel.w])
+  useEffect(() => { setHeightInput(String(sel.h)) }, [sel.h])
+
+  const commitWidth = () => {
+    const n = Number(widthInput)
+    if (Number.isFinite(n) && n > 0) {
+      onSelChange?.({ ...sel, w: Math.max(10, Math.round(n / 10) * 10) })
+    } else {
+      setWidthInput(String(sel.w))
+    }
+  }
+
+  const commitHeight = () => {
+    const n = Number(heightInput)
+    if (Number.isFinite(n) && n > 0) {
+      onSelChange?.({ ...sel, h: Math.max(10, Math.round(n / 10) * 10) })
+    } else {
+      setHeightInput(String(sel.h))
+    }
+  }
 
   // Settle the sheet's real `height` (not just its on-screen position) at the end of a
   // drag/tap, so the scrollable fields area (overflowY: auto) can pick up any overflow
@@ -226,7 +252,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
               }}>
-                {sel.w}×{sel.h}px · X{sel.x} Y{sel.y}
+                {sel.w}×{sel.h}px · <span style={{ color: '#2EE6A6' }}>{(sel.w * sel.h).toLocaleString('pl-PL')} px</span> · X{sel.x} Y{sel.y}
               </span>
             </div>
             <span style={{
@@ -271,6 +297,34 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
 
           {/* Form fields — compact 3-column on wide, 1-column on narrow */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 90px', minWidth: 0 }}>
+              <label style={labelStyle}>Szerokość</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={10}
+                step={10}
+                value={widthInput}
+                onChange={e => setWidthInput(e.target.value)}
+                onBlur={commitWidth}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitWidth() } }}
+                style={inputStyle}
+              />
+            </div>
+            <div style={{ flex: '1 1 90px', minWidth: 0 }}>
+              <label style={labelStyle}>Wysokość</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={10}
+                step={10}
+                value={heightInput}
+                onChange={e => setHeightInput(e.target.value)}
+                onBlur={commitHeight}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitHeight() } }}
+                style={inputStyle}
+              />
+            </div>
             <div style={{ flex: '1 1 120px', minWidth: 0 }}>
               <label style={labelStyle}>Właściciel *</label>
               <input

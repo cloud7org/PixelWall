@@ -310,6 +310,7 @@ export default function PixelWallClient() {
           imageUrl={sheetImageUrl}
           onClose={handleBottomSheetClose}
           onSuccess={handleBottomSheetSuccess}
+          onSelChange={setDragSel}
         />
       )}
 
