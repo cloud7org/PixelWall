@@ -9,7 +9,7 @@ export function drawPremiumZone(ctx: CanvasRenderingContext2D, scale: number, el
   ctx.fillStyle = 'rgba(255,210,63,0.05)'
   ctx.fillRect(0, 0, CENTRAL_W, CENTRAL_H)
 
-  // Shimmer — diagonal gold band sweeping across the zone, repeating with a pause
+  // Shimmer — diagonal aurora-borealis band sweeping across the zone, repeating with a pause
   const t = elapsedMs % SWEEP_PERIOD_MS
   if (t < SWEEP_DURATION_MS) {
     const progress = t / SWEEP_DURATION_MS
@@ -24,9 +24,11 @@ export function drawPremiumZone(ctx: CanvasRenderingContext2D, scale: number, el
       bandCenter - SWEEP_BAND_HALF_WIDTH, 0,
       bandCenter + SWEEP_BAND_HALF_WIDTH, CENTRAL_H
     )
-    grad.addColorStop(0, 'rgba(255,223,120,0)')
-    grad.addColorStop(0.5, 'rgba(255,223,120,0.35)')
-    grad.addColorStop(1, 'rgba(255,223,120,0)')
+    grad.addColorStop(0, 'rgba(64,255,170,0)')
+    grad.addColorStop(0.28, 'rgba(64,255,170,0.32)')   // aurora green
+    grad.addColorStop(0.5, 'rgba(80,220,255,0.34)')    // teal / cyan
+    grad.addColorStop(0.72, 'rgba(170,110,255,0.32)')  // violet
+    grad.addColorStop(1, 'rgba(170,110,255,0)')
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, CENTRAL_W, CENTRAL_H)
     ctx.restore()
