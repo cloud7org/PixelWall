@@ -28,20 +28,31 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   const [error, setError] = useState<string | null>(null)
   const blocksRef = useRef<PixelBlock[]>([])
   const sheetRef = useRef<HTMLDivElement>(null)
-  const dragRef = useRef<{ startY: number; startTranslate: number; moved: boolean } | null>(null)
+  const dragRef = useRef<{ startY: number; startHeight: number; expandedHeight: number; moved: boolean } | null>(null)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(id)
   }, [])
 
+  // Settle the sheet's real `height` (not just its on-screen position) at the end of a
+  // drag/tap, so the scrollable fields area (overflowY: auto) can pick up any overflow
+  // instead of content just being clipped when the sheet is dragged shorter. Expanding
+  // targets an explicit pixel value (not '' / auto) because CSS can't transition to
+  // "auto" — onTransitionEnd below releases it back to auto once the animation lands.
+  const settleHeight = (sheet: HTMLDivElement, nowCollapsed: boolean, expandedHeight: number) => {
+    sheet.style.height = nowCollapsed ? `${PEEK_HEIGHT}px` : `${expandedHeight}px`
+  }
+
   const onHandlePointerDown = (e: React.PointerEvent) => {
     const sheet = sheetRef.current
     if (!sheet) return
     e.currentTarget.setPointerCapture(e.pointerId)
-    const maxTranslate = Math.max(0, sheet.offsetHeight - PEEK_HEIGHT)
-    dragRef.current = { startY: e.clientY, startTranslate: collapsed ? maxTranslate : 0, moved: false }
+    const expandedHeight = Math.min(sheet.scrollHeight, window.innerHeight * 0.72)
+    const startHeight = collapsed ? PEEK_HEIGHT : sheet.getBoundingClientRect().height
+    dragRef.current = { startY: e.clientY, startHeight, expandedHeight, moved: false }
     sheet.style.transition = 'none'
+    sheet.style.height = `${startHeight}px`
   }
 
   const onHandlePointerMove = (e: React.PointerEvent) => {
@@ -50,9 +61,8 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
     if (!drag || !sheet) return
     const dy = e.clientY - drag.startY
     if (Math.abs(dy) > 4) drag.moved = true
-    const maxTranslate = Math.max(0, sheet.offsetHeight - PEEK_HEIGHT)
-    const next = Math.min(Math.max(drag.startTranslate + dy, 0), maxTranslate)
-    sheet.style.transform = `translateY(${next}px)`
+    const next = Math.min(Math.max(drag.startHeight - dy, PEEK_HEIGHT), drag.expandedHeight)
+    sheet.style.height = `${next}px`
   }
 
   const onHandlePointerUp = (e: React.PointerEvent) => {
@@ -60,16 +70,29 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
     const sheet = sheetRef.current
     dragRef.current = null
     if (!sheet) return
-    sheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)'
+    sheet.style.transition = 'height 0.3s cubic-bezier(0.32, 0.72, 0, 1)'
     if (!drag) return
     if (!drag.moved) {
-      setCollapsed(v => !v)
+      const nowCollapsed = !collapsed
+      setCollapsed(nowCollapsed)
+      settleHeight(sheet, nowCollapsed, drag.expandedHeight)
       return
     }
     const dy = e.clientY - drag.startY
-    const maxTranslate = Math.max(0, sheet.offsetHeight - PEEK_HEIGHT)
-    const currentTranslate = Math.min(Math.max(drag.startTranslate + dy, 0), maxTranslate)
-    setCollapsed(currentTranslate > maxTranslate * 0.35)
+    const next = Math.min(Math.max(drag.startHeight - dy, PEEK_HEIGHT), drag.expandedHeight)
+    const range = drag.expandedHeight - PEEK_HEIGHT
+    const nowCollapsed = range > 0 && (drag.expandedHeight - next) > range * 0.35
+    setCollapsed(nowCollapsed)
+    settleHeight(sheet, nowCollapsed, drag.expandedHeight)
+  }
+
+  const onSheetTransitionEnd = (e: React.TransitionEvent) => {
+    if (e.propertyName !== 'height') return
+    const sheet = sheetRef.current
+    // Release the explicit px height back to auto (still capped by maxHeight) once the
+    // expand animation lands, so later content growth (e.g. an error message) can still
+    // grow the sheet instead of being stuck at a stale measured height.
+    if (sheet && !collapsed) sheet.style.height = ''
   }
 
   useEffect(() => {
@@ -164,28 +187,28 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
         right: 0,
         zIndex: 300,
         maxHeight: '72vh',
+        height: collapsed ? PEEK_HEIGHT : undefined,
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'hidden',
         background: '#0B0C10',
         borderTop: '2px solid #2A2C36',
         borderRadius: '16px 16px 0 0',
         paddingBottom: 'env(safe-area-inset-bottom)',
-        transform: !visible
-          ? 'translateY(100%)'
-          : collapsed
-          ? `translateY(calc(100% - ${PEEK_HEIGHT}px))`
-          : 'translateY(0)',
-        transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+        transform: !visible ? 'translateY(100%)' : 'translateY(0)',
+        transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), height 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
         boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
       }}
+      onTransitionEnd={onSheetTransitionEnd}
     >
-      {/* Drag handle — swipe down to peek at the grid below, swipe/tap up to restore */}
+      {/* Drag handle — swipe down to shrink the sheet (fields area scrolls once it no
+          longer fits), swipe/tap up to restore. Fixed size so it never gets squeezed. */}
       <div
         onPointerDown={onHandlePointerDown}
         onPointerMove={onHandlePointerMove}
         onPointerUp={onHandlePointerUp}
         onPointerCancel={onHandlePointerUp}
-        style={{ display: 'flex', justifyContent: 'center', padding: '10px 0', touchAction: 'none', cursor: 'grab' }}
+        style={{ display: 'flex', justifyContent: 'center', padding: '10px 0', touchAction: 'none', cursor: 'grab', flexShrink: 0 }}
       >
         <div style={{ width: 36, height: 4, background: '#2EE6A6', borderRadius: 2, boxShadow: '0 0 8px rgba(46,230,166,0.7)' }} />
       </div>
