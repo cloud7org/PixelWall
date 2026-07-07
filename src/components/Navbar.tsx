@@ -58,7 +58,7 @@ export default function Navbar() {
           href="/"
           style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}
         >
-          <img src="/pixelverse-logo.png" alt="Pixelverse" style={{ height: 36, width: 'auto', borderRadius: 6 }} />
+          <img src="/logo.png" alt="Pixarium" style={{ height: 36, width: 'auto', borderRadius: 6 }} />
         </Link>
 
         {/* Middle: animated tagline — never covers logo or nav items */}
@@ -133,7 +133,7 @@ export default function Navbar() {
               onClick={() => setMenuOpen(false)}
               style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}
             >
-              <img src="/pixelverse-logo.png" alt="Pixelverse" style={{ height: 36, width: 'auto', borderRadius: 6 }} />
+              <img src="/logo.png" alt="Pixarium" style={{ height: 36, width: 'auto', borderRadius: 6 }} />
             </Link>
             <button
               onClick={() => setMenuOpen(false)}

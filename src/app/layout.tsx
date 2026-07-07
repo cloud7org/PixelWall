@@ -21,8 +21,9 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Pixelverse — Milion pixeli, jeden internet',
-  description: 'Kup kawałek internetu na zawsze. Milion pixeli, jeden dolar za pixel.',
+  metadataBase: new URL('https://www.pixarium.pl'),
+  title: 'Pixarium — Milion pixeli, jeden internet',
+  description: 'Kup kawałek internetu i stań się częścią największego obrazu w sieci. Milion pixeli, jeden internet.',
 }
 
 export const viewport: Viewport = {

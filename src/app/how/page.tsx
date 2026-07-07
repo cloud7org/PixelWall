@@ -17,7 +17,7 @@ export default function HowPage() {
           color: '#5A5C66',
         }}
       >
-        <span>pixelverse — strona demonstracyjna</span>
+        <span>pixarium — strona z pasją do życia</span>
       </footer>
     </div>
   )

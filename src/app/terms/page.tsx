@@ -5,7 +5,7 @@ import BackToGridLink from '@/components/BackToGridLink'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 const CONTACT_EMAIL = 'cloud7.org@gmail.com'
-const SITE_ADDRESS = '[ADRES STRONY]'
+const SITE_ADDRESS = 'www.pixarium.pl'
 const UPDATED_AT = '5 lipca 2026'
 
 export default function TermsPage() {
@@ -89,7 +89,7 @@ export default function TermsPage() {
             color: '#F5F0E6',
             marginBottom: 16,
           }}>
-            Regulamin serwisu Pixora
+            Regulamin serwisu Pixarium
           </h1>
           <p style={{ ...pStyle, color: '#5A5C66', marginBottom: 0 }}>
             Ostatnia aktualizacja: {UPDATED_AT}
@@ -99,7 +99,7 @@ export default function TermsPage() {
         {/* 1. Postanowienia ogólne */}
         <h2 style={h2Style}>1. Postanowienia ogólne</h2>
         <p style={pStyle}>
-          1.1. Niniejszy regulamin określa zasady korzystania z serwisu Pixora, dostępnego pod
+          1.1. Niniejszy regulamin określa zasady korzystania z serwisu Pixarium, dostępnego pod
           adresem {SITE_ADDRESS}, oraz warunki zakupu przestrzeni reklamowej na siatce pikseli.
         </p>
         <p style={pStyle}>
@@ -107,7 +107,7 @@ export default function TermsPage() {
           email: <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: '#2EE6A6' }}>{CONTACT_EMAIL}</a> (dalej: „Sprzedawca").
         </p>
         <p style={pStyle}>
-          1.3. Pixora to serwis internetowy umożliwiający zakup prostokątnych bloków pikseli na
+          1.3. Pixarium to serwis internetowy umożliwiający zakup prostokątnych bloków pikseli na
           nieskończonej siatce graficznej. Zakup daje prawo do wyświetlania własnej grafiki i linku
           w zakupionym obszarze przez okres 10 lat. Po upływie tego okresu serwis w dotychczasowej
           formie zostaje zastąpiony stroną statyczną zawierającą zrzut ekranu całej mozaiki oraz
@@ -119,8 +119,7 @@ export default function TermsPage() {
           wyboru (checkbox) w formularzu zakupu.
         </p>
         <p style={pStyle}>
-          1.5. Regulamin jest dostępny bezpłatnie pod adresem {SITE_ADDRESS}/terms i może być
-          w każdej chwili pobrany i zapisany przez użytkownika.
+          1.5. Regulamin jest dostępny bezpłatnie pod adresem {SITE_ADDRESS}/terms.
         </p>
 
         <div style={dividerStyle} />
@@ -128,7 +127,7 @@ export default function TermsPage() {
         {/* 2. Przedmiot usługi */}
         <h2 style={h2Style}>2. Przedmiot usługi</h2>
         <p style={pStyle}>
-          2.1. Użytkownik kupuje prostokątny blok pikseli na siatce graficznej serwisu Pixora.
+          2.1. Użytkownik kupuje prostokątny blok pikseli na siatce graficznej serwisu Pixarium.
           Siatka jest nieskończona i podzielona na dwie strefy:
         </p>
         <ul style={{ paddingLeft: 20, marginBottom: 14 }}>
@@ -139,19 +138,19 @@ export default function TermsPage() {
           </li>
           <li style={liStyle}>
             <strong style={{ color: '#F5F0E6' }}>Strefa Standard</strong> — cały obszar siatki poza
-            strefą Time Square. Minimalne wymiary zakupionego bloku: 100×100 pikseli.
+            strefą Time Square. Minimalne wymiary zakupionego bloku: dowolne ale kwota zamówienia
+            nie mnijesza niż 15 zł. W przypadku wybrania obszaru po niżej wartości 15 zł kwota zostaje
+            taka sama.
           </li>
         </ul>
         <p style={pStyle}>
-          2.2. Po zakupie użytkownik wgrywa własną grafikę oraz podaje link URL. Grafika i link są
-          wyświetlane bezterminowo w zakupionym miejscu na siatce.
+          2.2. Po zakupie użytkownik wgrywa własną grafikę oraz podaje link URL.
         </p>
         <p style={pStyle}>
           2.3. Obrazy (grafiki) oraz przypisane do nich linki przechowywane są przez okres 10 lat od
           daty zakupu. Po upływie tego okresu serwis przechodzi w tryb statyczny — aktywna siatka
           zostaje zastąpiona zrzutem ekranu całej mozaiki dostępnym jako strona statyczna, wraz
-          z zakładką „Właściciele" zawierającą listę wszystkich uczestników. Użytkownicy (jeśli
-          podali adres email) zostaną powiadomieni o tej zmianie z minimum 30-dniowym wyprzedzeniem.
+          z zakładką „Właściciele" zawierającą listę wszystkich uczestników.
         </p>
         <p style={pStyle}>
           2.4. Każdy zakupiony blok pikseli jest unikalny i niepowtarzalny — po zakupie dany obszar
@@ -230,7 +229,7 @@ export default function TermsPage() {
         {/* 5. Prawo odstąpienia */}
         <h2 style={h2Style}>5. Prawo odstąpienia od umowy</h2>
         <p style={pStyle}>
-          5.1. Pixora świadczy usługę dostarczania treści cyfrowej (reklamy graficznej wyświetlanej
+          5.1. Pixarium świadczy usługę dostarczania treści cyfrowej (reklamy graficznej wyświetlanej
           online). Zgodnie z art. 38 pkt 13 ustawy z dnia 30 maja 2014 r. o prawach konsumenta,
           prawo odstąpienia od umowy w ciągu 14 dni nie przysługuje, jeżeli spełnione są łącznie dwa
           warunki:
@@ -242,7 +241,7 @@ export default function TermsPage() {
         <div style={boxStyle}>
           <p style={{ ...pStyle, marginBottom: 0 }}>
             5.2. W formularzu zakupu użytkownik potwierdza oba powyższe warunki poprzez zaznaczenie
-            obowiązkowego pola wyboru: „Akceptuję regulamin serwisu Pixora i przyjmuję do wiadomości,
+            obowiązkowego pola wyboru: „Akceptuję regulamin serwisu Pixarium i przyjmuję do wiadomości,
             że po potwierdzeniu płatności tracę prawo do odstąpienia od umowy zgodnie z art. 38 pkt
             13 ustawy o prawach konsumenta."
           </p>
@@ -331,8 +330,7 @@ export default function TermsPage() {
               7.4. Warunek wyświetlenia: zapełnienie co najmniej 90% centralnego obszaru. Jeżeli
               warunek ten nie zostanie spełniony, wyświetlenie na Times Square nie nastąpi. Nie
               stanowi to podstawy do reklamacji ani zwrotu płatności — zakup piksela gwarantuje
-              wyświetlanie reklamy na stronie internetowej przez 10 lat, niezależnie od wyświetlenia
-              na Times Square.
+              wyświetlanie grafiki na stronie w centralnym obszarze siatki Pixarium.
             </p>
           </div>
 
@@ -417,23 +415,17 @@ export default function TermsPage() {
           usług drogą elektroniczną.
         </p>
         <p style={pStyle}>
-          10.2. Sprzedawca zastrzega prawo do zmiany niniejszego regulaminu. O zmianach użytkownicy
-          zostaną poinformowani z co najmniej 14-dniowym wyprzedzeniem poprzez komunikat na stronie
-          głównej serwisu. Zmiany regulaminu nie dotyczą zakupów dokonanych przed ich wejściem
-          w życie.
+          10.2. Sprzedawca zastrzega prawo do zmiany niniejszego regulaminu. Aktualizacja regulaminu
+          będzie publikowana na tej stronie.
         </p>
         <p style={pStyle}>
-          10.3. Sprzedawca przechowuje archiwalne wersje regulaminu i udostępnia je na żądanie
-          użytkownika.
-        </p>
-        <p style={pStyle}>
-          10.4. Regulamin obowiązuje od dnia: [DATA PUBLIKACJI].
+          10.3. Regulamin obowiązuje od dnia: [DATA PUBLIKACJI].
         </p>
 
         <div style={dividerStyle} />
 
         <p style={{ ...pStyle, color: '#5A5C66', marginTop: 32, fontSize: 12 }}>
-          Pixora · <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: '#5A5C66' }}>{CONTACT_EMAIL}</a> · {SITE_ADDRESS}
+          Pixarium · <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: '#5A5C66' }}>{CONTACT_EMAIL}</a> · {SITE_ADDRESS}
         </p>
 
       </div>
