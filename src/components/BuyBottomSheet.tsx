@@ -130,6 +130,11 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   const { premiumPixels, standardPixels, premiumSubtotal, standardSubtotal, price } =
     calculatePrice(sel.x, sel.y, sel.w, sel.h)
 
+  // Consent/submit section only slides out once the required fields are filled, so
+  // the sheet stays compact (~30% of viewport) and leaves more of the grid visible
+  // until the user is actually ready to confirm the purchase.
+  const requiredFilled = ownerName.trim() !== '' && email.trim() !== ''
+
   const hasOverlap = () =>
     blocksRef.current.some(
       b => sel.x < b.x + b.width && sel.x + sel.w > b.x &&
@@ -372,8 +377,17 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
           </div>
           </div>{/* end scrollable */}
 
-          {/* Sticky footer: checkbox + error + button */}
-          <div style={{ flexShrink: 0, padding: '8px 16px 12px', borderTop: '1px solid #2A2C36' }}>
+          {/* Sticky footer: checkbox + error + button — slides out once required fields are filled */}
+          <div
+            style={{
+              flexShrink: 0,
+              maxHeight: requiredFilled ? 400 : 0,
+              opacity: requiredFilled ? 1 : 0,
+              overflow: 'hidden',
+              transition: 'max-height 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease',
+            }}
+          >
+          <div style={{ padding: '8px 16px 12px', borderTop: '1px solid #2A2C36' }}>
           {/* Checkbox zgody */}
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', marginBottom: 10 }}>
             <input
@@ -446,6 +460,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
           >
             {uploading ? 'Wysyłam…' : 'Dodaj'}
           </button>
+          </div>
           </div>{/* end sticky footer */}
         </form>
     </div>
