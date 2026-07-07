@@ -791,16 +791,19 @@ export default function PixelGrid({
         return
       }
 
-      // Finalize touch draw mode
+      // Finalize draw mode (mouse drag-select or touch tap/drag-select)
       if (isDrawingRef.current) {
         isDrawingRef.current = false
         const ds = drawSelRef.current
-        const overlapped = drawSelOverlapRef.current
         drawSelRef.current = null
         drawSelOverlapRef.current = false
         drawStartGridRef.current = null
         scheduleRedraw()
-        if (ds && dragMovedRef.current && ds.w >= 10 && ds.h >= 10 && !overlapped) {
+        // Recompute overlap fresh from `ds` rather than trusting the last-seen
+        // drawSelOverlapRef snapshot: a press+hold released without any
+        // pointermove in between (e.g. a long, steady hold) never updates that
+        // snapshot, so relying on it would silently drop a valid selection.
+        if (ds && ds.w >= 10 && ds.h >= 10 && !overlapsBlock(ds)) {
           onDragSelCompleteRef.current?.(ds)
         }
         dragMovedRef.current = false
