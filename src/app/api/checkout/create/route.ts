@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
     customer_email: email,
     success_url: `${origin}/buy/success?order=${id}`,
     cancel_url: `${origin}/`,
+    // Match the pending_orders row's own 30-minute expires_at, so the
+    // checkout.session.expired webhook (payment-failure email) fires in sync.
+    expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
   })
 
   const { error: insErr } = await supabaseAdmin.from('pending_orders').insert({

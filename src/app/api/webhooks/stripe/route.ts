@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { sendPaymentSuccessEmail, sendPaymentFailedEmail } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -50,10 +51,40 @@ export async function POST(request: NextRequest) {
               owner_name: order.owner_name, alt_text: order.alt_text, email: order.email,
               privacy_consent: true, privacy_consent_at: new Date().toISOString(),
             })
+
+            await sendPaymentSuccessEmail({
+              email: order.email,
+              ownerName: order.owner_name,
+              createdAt: order.created_at,
+              amountPln: order.amount_pln,
+            })
           }
 
           await supabaseAdmin.from('pending_orders').delete().eq('id', pendingOrderId)
         }
+      }
+    }
+  } else if (event.type === 'checkout.session.expired') {
+    // Checkout session timed out without a completed payment — the counterpart to
+    // checkout.session.completed above. Requires "checkout.session.expired" to be
+    // enabled on the Stripe webhook endpoint (dashboard config, not code).
+    const session = event.data.object as Stripe.Checkout.Session
+    const pendingOrderId = session.client_reference_id
+
+    if (pendingOrderId) {
+      const { data: order } = await supabaseAdmin
+        .from('pending_orders')
+        .select('*')
+        .eq('id', pendingOrderId)
+        .maybeSingle()
+
+      if (order) {
+        await sendPaymentFailedEmail({
+          email: order.email,
+          ownerName: order.owner_name,
+          createdAt: order.created_at,
+          amountPln: order.amount_pln,
+        })
       }
     }
   }
