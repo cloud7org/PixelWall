@@ -8,6 +8,7 @@ import { useBreakpoint } from '@/hooks/useBreakpoint'
 import ToolModeToggle from './ToolModeToggle'
 import { CENTRAL_W, CENTRAL_H, calculatePrice, formatPln } from '@/lib/pricing'
 import { drawPremiumZone } from '@/lib/drawPremiumZone'
+import { resizeImageForStorage } from '@/lib/image'
 
 const GRID_STEP = 20
 const MIN_SCALE = 0.001
@@ -706,17 +707,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
 
     setUploading(true)
     try {
-      const resized = await new Promise<Blob>((resolve, reject) => {
-        const img = new Image()
-        img.onload = () => {
-          const c = document.createElement('canvas')
-          c.width = sel.w; c.height = sel.h
-          c.getContext('2d')!.drawImage(img, 0, 0, sel.w, sel.h)
-          c.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
-        }
-        img.onerror = reject
-        img.src = imagePreview!
-      })
+      const resized = await resizeImageForStorage(imagePreview!, sel.w, sel.h)
       const id = crypto.randomUUID()
       const { error: upErr } = await supabase.storage.from('pixel-images').upload(`${id}.png`, resized, { contentType: 'image/png' })
       if (upErr) throw new Error(upErr.message)

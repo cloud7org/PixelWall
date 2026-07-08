@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { calculatePrice, formatPln } from '@/lib/pricing'
+import { resizeImageForStorage } from '@/lib/image'
 
 interface Props {
   sel: { x: number; y: number; w: number; h: number }
@@ -152,17 +153,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
 
     setUploading(true)
     try {
-      const resized = await new Promise<Blob>((resolve, reject) => {
-        const img = new Image()
-        img.onload = () => {
-          const c = document.createElement('canvas')
-          c.width = sel.w; c.height = sel.h
-          c.getContext('2d')!.drawImage(img, 0, 0, sel.w, sel.h)
-          c.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
-        }
-        img.onerror = reject
-        img.src = imageUrl
-      })
+      const resized = await resizeImageForStorage(imageUrl, sel.w, sel.h)
       const id = crypto.randomUUID()
       const { error: upErr } = await supabase.storage.from('pixel-images').upload(`${id}.png`, resized, { contentType: 'image/png' })
       if (upErr) throw new Error(upErr.message)
