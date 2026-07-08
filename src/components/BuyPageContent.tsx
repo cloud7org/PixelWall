@@ -958,13 +958,18 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           { id: 'alt',   label: 'Opis obrazka',               val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false, type: 'text',  maxLength: 300 },
         ] as const).map(({ id, label, val, set, placeholder, req, type, maxLength }) => (
           <div key={id} style={{ marginBottom: 16 }}>
-            <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+            <label style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontSize: 11, letterSpacing: '0.05em', color: id === 'email' ? '#2EE6A6' : '#B7B2A4', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
               {label}{req && <span style={{ color: '#FF4D2E' }}> *</span>}
             </label>
             <input
               type={type} value={val} onChange={e => set(e.target.value)}
               placeholder={placeholder} required={req} maxLength={maxLength}
-              style={{ width: '100%', background: '#1A1C24', border: '1px solid #2A2C36', color: '#F5F0E6', padding: '10px 12px', fontFamily: 'var(--font-inter), sans-serif', fontSize: 14, outline: 'none' }}
+              style={{
+                width: '100%', background: '#1A1C24',
+                border: id === 'email' ? '1px solid #2EE6A6' : '1px solid #2A2C36',
+                boxShadow: id === 'email' ? '0 0 0 1px rgba(46,230,166,0.25)' : undefined,
+                color: '#F5F0E6', padding: '10px 12px', fontFamily: 'var(--font-inter), sans-serif', fontSize: 14, outline: 'none',
+              }}
             />
           </div>
         ))}

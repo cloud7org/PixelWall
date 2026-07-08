@@ -320,13 +320,13 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
               />
             </div>
             <div style={{ flex: '1 1 120px', minWidth: 0 }}>
-              <label style={labelStyle}>E-mail *</label>
+              <label style={{ ...labelStyle, color: '#2EE6A6' }}>E-mail *</label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="email@gmail.com"
-                style={inputStyle}
+                style={{ ...inputStyle, border: '1px solid #2EE6A6', boxShadow: '0 0 0 1px rgba(46,230,166,0.25)' }}
                 required
               />
             </div>
