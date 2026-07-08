@@ -22,7 +22,6 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   const [collapsed, setCollapsed] = useState(false)
   const [widthInput, setWidthInput] = useState(String(sel.w))
   const [heightInput, setHeightInput] = useState(String(sel.h))
-  const [ownerName, setOwnerName] = useState('')
   const [email, setEmail] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [altText, setAltText] = useState('')
@@ -134,7 +133,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   // Consent/submit section only slides out once the required fields are filled, so
   // the sheet stays compact (~30% of viewport) and leaves more of the grid visible
   // until the user is actually ready to confirm the purchase.
-  const requiredFilled = ownerName.trim() !== '' && email.trim() !== ''
+  const requiredFilled = email.trim() !== ''
 
   const hasOverlap = () =>
     blocksRef.current.some(
@@ -145,7 +144,6 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    if (!ownerName.trim()) { setError('Podaj nazwę właściciela.'); return }
     if (!email.trim()) { setError('Podaj adres e-mail.'); return }
     if (!privacyConsent) { setError('Zaakceptuj politykę prywatności, aby kontynuować.'); return }
     if (!termsConsent)   { setError('Zaakceptuj regulamin serwisu, aby kontynuować.'); return }
@@ -164,7 +162,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
         body: JSON.stringify({
           x: sel.x, y: sel.y, w: sel.w, h: sel.h,
           imageUrl: urlData.publicUrl, linkUrl: linkUrl || null,
-          ownerName: ownerName || null, altText: altText || null, email,
+          ownerName: null, altText: altText || null, email,
         }),
       })
       const data = await res.json()
@@ -319,18 +317,6 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
                 onBlur={commitHeight}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitHeight() } }}
                 style={inputStyle}
-              />
-            </div>
-            <div style={{ flex: '1 1 120px', minWidth: 0 }}>
-              <label style={labelStyle}>Właściciel *</label>
-              <input
-                type="text"
-                value={ownerName}
-                onChange={e => setOwnerName(e.target.value)}
-                placeholder="Nazwa"
-                style={inputStyle}
-                maxLength={50}
-                required
               />
             </div>
             <div style={{ flex: '1 1 120px', minWidth: 0 }}>

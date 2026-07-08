@@ -76,7 +76,7 @@ export default function Navbar() {
               Jak to działa
             </Link>
             <Link href="/owners" style={{ color: '#B7B2A4', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>
-              Właściciele
+              Liga
             </Link>
           </div>
         )}
@@ -149,7 +149,7 @@ export default function Navbar() {
             {[
               { href: '/',       label: 'Siatka' },
               { href: '/how',    label: 'Jak to działa' },
-              { href: '/owners', label: 'Właściciele' },
+              { href: '/owners', label: 'Liga' },
             ].map(({ href, label }) => (
               <Link
                 key={href}

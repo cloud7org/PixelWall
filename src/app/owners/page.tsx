@@ -49,7 +49,7 @@ export default function OwnersPage() {
               marginBottom: 12,
             }}
           >
-            {blocks.length} właścicieli
+            {blocks.length} bloków w lidze
           </span>
           <h1
             style={{
@@ -61,7 +61,7 @@ export default function OwnersPage() {
               marginBottom: 8,
             }}
           >
-            Ranking właścicieli
+            Ranking Ligi
           </h1>
           <p style={{
             fontFamily: 'var(--font-jetbrains-mono), monospace',
@@ -79,7 +79,7 @@ export default function OwnersPage() {
         ) : blocks.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <p style={{ color: '#B7B2A4', marginBottom: 24, fontSize: 16 }}>
-              Nie ma jeszcze żadnych właścicieli. Bądź pierwszy!
+              Liga jest jeszcze pusta. Bądź pierwszy!
             </p>
             <Link
               href="/buy"
@@ -108,7 +108,7 @@ export default function OwnersPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                 <thead>
                   <tr style={{ background: '#14151B', borderBottom: '1px solid #1F212B' }}>
-                    {['Miejsce', 'Podgląd', 'Właściciel', 'Rozmiar', 'Piksele', 'Cena', 'Link', 'Data'].map(h => (
+                    {['Miejsce', 'Podgląd', 'Rozmiar', 'Piksele', 'Cena', 'Link', 'Data'].map(h => (
                       <th
                         key={h}
                         style={{
@@ -159,22 +159,6 @@ export default function OwnersPage() {
                             height={40}
                             style={{ objectFit: 'cover', border: `1px solid ${isFirst ? '#FFD23F' : '#2A2C36'}`, borderRadius: 4 }}
                           />
-                        </td>
-                        <td
-                          title={block.owner_name ?? 'Anonimowy'}
-                          style={{
-                            padding: '12px 16px',
-                            color: isFirst ? '#FFD23F' : '#F5F0E6',
-                            fontSize: 14,
-                            fontWeight: isFirst ? 700 : 400,
-                            width: 160,
-                            maxWidth: 160,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {block.owner_name ?? 'Anonimowy'}
                         </td>
                         <td
                           style={{

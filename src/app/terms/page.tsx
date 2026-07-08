@@ -111,7 +111,7 @@ export default function TermsPage() {
           nieskończonej siatce graficznej. Zakup daje prawo do wyświetlania własnej grafiki i linku
           w zakupionym obszarze przez okres 10 lat. Po upływie tego okresu serwis w dotychczasowej
           formie zostaje zastąpiony stroną statyczną zawierającą zrzut ekranu całej mozaiki oraz
-          zakładkę „Właściciele" z listą wszystkich uczestników.
+          zakładkę „Liga" z listą wszystkich uczestników.
         </p>
         <p style={pStyle}>
           1.4. Korzystanie z serwisu oznacza akceptację niniejszego regulaminu. Przed dokonaniem
@@ -150,7 +150,7 @@ export default function TermsPage() {
           2.3. Obrazy (grafiki) oraz przypisane do nich linki przechowywane są przez okres 10 lat od
           daty zakupu. Po upływie tego okresu serwis przechodzi w tryb statyczny — aktywna siatka
           zostaje zastąpiona zrzutem ekranu całej mozaiki dostępnym jako strona statyczna, wraz
-          z zakładką „Właściciele" zawierającą listę wszystkich uczestników.
+          z zakładką „Liga" zawierającą listę wszystkich uczestników.
         </p>
         <p style={pStyle}>
           2.4. Każdy zakupiony blok pikseli jest unikalny i niepowtarzalny — po zakupie dany obszar

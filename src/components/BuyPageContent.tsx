@@ -107,7 +107,6 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const [toolMode, setToolMode]     = useState<ToolMode>('draw')
   const [snapEnabled, setSnapEnabled] = useState(true)
   const [zoomPct, setZoomPct]       = useState(30)
-  const [ownerName, setOwnerName]   = useState('')
   const [email, setEmail]           = useState('')
   const [privacyConsent, setPrivacyConsent] = useState(false)
   const [termsConsent, setTermsConsent]     = useState(false)
@@ -698,7 +697,6 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    if (!ownerName.trim())             { setError('Podaj nazwę właściciela.'); return }
     if (!email.trim())                 { setError('Podaj adres e-mail.'); return }
     if (!privacyConsent)               { setError('Zaakceptuj politykę prywatności, aby kontynuować.'); return }
     if (!termsConsent)                 { setError('Zaakceptuj regulamin serwisu, aby kontynuować.'); return }
@@ -718,7 +716,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         body: JSON.stringify({
           x: sel.x, y: sel.y, w: sel.w, h: sel.h,
           imageUrl: urlData.publicUrl, linkUrl: linkUrl || null,
-          ownerName: ownerName || null, altText: altText || null, email,
+          ownerName: null, altText: altText || null, email,
         }),
       })
       const data = await res.json()
@@ -955,7 +953,6 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
 
         {/* Text fields */}
         {([
-          { id: 'owner', label: 'Nazwa właściciela',          val: ownerName, set: setOwnerName, placeholder: 'Nazwa',              req: true,  type: 'text',  maxLength: 50  },
           { id: 'email', label: 'Adres e-mail',               val: email,     set: setEmail,     placeholder: 'email@gmail.com',    req: true,  type: 'email', maxLength: undefined },
           { id: 'link',  label: 'Link URL (strona, blog, etc)', val: linkUrl,   set: setLinkUrl,   placeholder: 'https://',           req: false, type: 'text',  maxLength: undefined },
           { id: 'alt',   label: 'Opis obrazka',               val: altText,   set: setAltText,   placeholder: 'Krótki opis',         req: false, type: 'text',  maxLength: 300 },
