@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
             })
 
             await sendPaymentSuccessEmail({
+              orderId: order.id,
               email: order.email,
               ownerName: order.owner_name,
               createdAt: order.created_at,
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
 
       if (order) {
         await sendPaymentFailedEmail({
+          orderId: order.id,
           email: order.email,
           ownerName: order.owner_name,
           createdAt: order.created_at,
