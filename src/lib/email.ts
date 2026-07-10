@@ -4,6 +4,7 @@ import { Resend } from 'resend'
 export const resend = new Resend(process.env.RESEND_API_KEY!)
 
 const FROM = process.env.EMAIL_FROM ?? 'Pixarium <onboarding@resend.dev>'
+const REPLY_TO = process.env.EMAIL_REPLY_TO
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('pl-PL', {
@@ -29,6 +30,7 @@ export async function sendPaymentSuccessEmail(order: OrderEmailData) {
   const { error } = await resend.emails.send({
     from: FROM,
     to: order.email,
+    replyTo: REPLY_TO,
     subject: 'Płatność potwierdzona — Twoje piksele są aktywne',
     html: `
       <div style="font-family: monospace; background:#0B0C10; color:#F5F0E6; padding:32px;">
@@ -53,6 +55,7 @@ export async function sendPaymentFailedEmail(order: OrderEmailData) {
   const { error } = await resend.emails.send({
     from: FROM,
     to: order.email,
+    replyTo: REPLY_TO,
     subject: 'Płatność nie powiodła się',
     html: `
       <div style="font-family: monospace; background:#0B0C10; color:#F5F0E6; padding:32px;">
