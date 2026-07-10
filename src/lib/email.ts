@@ -38,14 +38,14 @@ export async function sendPaymentSuccessEmail(order: OrderEmailData) {
         <p>Cześć ${owner},</p>
         <p>Twoja płatność została pomyślnie zrealizowana i Twoje piksele są już aktywne na siatce.</p>
         <ul>
-          <li><strong>Właściciel:</strong> ${owner}</li>
           <li><strong>Data:</strong> ${formatDate(order.createdAt)}</li>
           <li><strong>Kwota:</strong> ${formatAmount(order.amountPln)}</li>
         </ul>
         <p>Dziękujemy za zakup na Pixarium!</p>
+        <p>W razie pytań napisz do nas: ${REPLY_TO}</p>
       </div>
     `,
-    text: `Płatność potwierdzona\n\nWłaściciel: ${owner}\nData: ${formatDate(order.createdAt)}\nKwota: ${formatAmount(order.amountPln)}\n\nDziękujemy za zakup na Pixarium!`,
+    text: `Płatność potwierdzona\n\nData: ${formatDate(order.createdAt)}\nKwota: ${formatAmount(order.amountPln)}\n\nDziękujemy za zakup na Pixarium!\n\nW razie pytań napisz do nas: ${REPLY_TO}`,
   })
   if (error) console.error('Failed to send payment success email:', error)
 }
@@ -63,14 +63,14 @@ export async function sendPaymentFailedEmail(order: OrderEmailData) {
         <p>Cześć ${owner},</p>
         <p>Niestety Twoja płatność za poniższe zamówienie nie została zrealizowana i sesja płatności wygasła.</p>
         <ul>
-          <li><strong>Właściciel:</strong> ${owner}</li>
           <li><strong>Data próby:</strong> ${formatDate(order.createdAt)}</li>
           <li><strong>Kwota:</strong> ${formatAmount(order.amountPln)}</li>
         </ul>
         <p>Możesz spróbować ponownie, wracając na stronę i wybierając ten sam obszar (o ile nadal jest wolny).</p>
+        <p>W razie pytań napisz do nas: ${REPLY_TO}</p>
       </div>
     `,
-    text: `Płatność nie powiodła się\n\nWłaściciel: ${owner}\nData próby: ${formatDate(order.createdAt)}\nKwota: ${formatAmount(order.amountPln)}\n\nMożesz spróbować ponownie na stronie.`,
+    text: `Płatność nie powiodła się\n\nData próby: ${formatDate(order.createdAt)}\nKwota: ${formatAmount(order.amountPln)}\n\nMożesz spróbować ponownie na stronie.\n\nW razie pytań napisz do nas: ${REPLY_TO}`,
   })
   if (error) console.error('Failed to send payment failed email:', error)
 }
