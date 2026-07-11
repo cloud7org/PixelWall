@@ -34,6 +34,11 @@ html, body {
 
 * { -webkit-tap-highlight-color: transparent; }
 
+.pw-viewport {
+  height: 100vh;
+  height: 100dvh;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }

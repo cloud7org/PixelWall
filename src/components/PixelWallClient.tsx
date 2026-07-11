@@ -122,7 +122,7 @@ export default function PixelWallClient() {
   }, [])
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0B0C10' }}>
+    <div className="pw-viewport" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0B0C10' }}>
       <Navbar />
 
       {/* Canvas */}
@@ -279,6 +279,7 @@ export default function PixelWallClient() {
           justifyContent: 'center',
           gap: isMobile ? 16 : 40,
           padding: isMobile ? '8px 12px' : '10px 32px',
+          paddingBottom: `calc(${isMobile ? '8px' : '10px'} + env(safe-area-inset-bottom))`,
           background: '#0B0C10',
           borderTop: '1px solid #1F212B',
           flexShrink: 0,
