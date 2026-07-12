@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import BackToGridCornerButton from '@/components/BackToGridCornerButton'
@@ -22,13 +22,34 @@ export default function OwnersPage() {
       .from('pixel_blocks')
       .select('*')
       .then(({ data }) => {
-        const sorted = ((data as PixelBlock[]) ?? []).sort(
-          (a, b) => b.width * b.height - a.width * a.height
-        )
-        setBlocks(sorted)
+        setBlocks((data as PixelBlock[]) ?? [])
         setLoading(false)
       })
   }, [])
+
+  const players = useMemo(() => {
+    const groups = new Map<string, PixelBlock[]>()
+    for (const block of blocks) {
+      const key = block.email?.trim().toLowerCase() ?? ''
+      const group = groups.get(key)
+      if (group) group.push(block)
+      else groups.set(key, [block])
+    }
+    return Array.from(groups.entries())
+      .map(([email, playerBlocks]) => {
+        const byDate = [...playerBlocks].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )
+        return {
+          email,
+          totalPixels: playerBlocks.reduce((sum, b) => sum + b.width * b.height, 0),
+          blockCount: playerBlocks.length,
+          firstBlock: byDate[0],
+          lastPurchaseAt: byDate[byDate.length - 1].created_at,
+        }
+      })
+      .sort((a, b) => b.totalPixels - a.totalPixels)
+  }, [blocks])
 
   return (
     <div style={{ background: '#0B0C10', minHeight: '100vh' }}>
@@ -75,7 +96,7 @@ export default function OwnersPage() {
           <div style={{ color: '#B7B2A4', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
             Ładowanie…
           </div>
-        ) : blocks.length === 0 ? (
+        ) : players.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <p style={{ color: '#B7B2A4', marginBottom: 24, fontSize: 16 }}>
               Liga jest jeszcze pusta. Bądź pierwszy!
@@ -107,7 +128,7 @@ export default function OwnersPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                 <thead>
                   <tr style={{ background: '#14151B', borderBottom: '1px solid #1F212B' }}>
-                    {['Miejsce', 'Podgląd', 'Rozmiar', 'Piksele', 'Email', 'Link', 'Data'].map(h => (
+                    {['Miejsce', 'Podgląd', 'Liczba bloków', 'Piksele', 'Email', 'Link', 'Data'].map(h => (
                       <th
                         key={h}
                         style={{
@@ -127,13 +148,14 @@ export default function OwnersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {blocks.map((block, i) => {
+                  {players.map((player, i) => {
                     const isFirst = i === 0
+                    const linkUrl = player.firstBlock.link_url
                     return (
                       <tr
-                        key={block.id}
+                        key={player.email}
                         style={{
-                          borderBottom: i < blocks.length - 1 ? '1px solid #1F212B' : 'none',
+                          borderBottom: i < players.length - 1 ? '1px solid #1F212B' : 'none',
                           background: isFirst
                             ? 'rgba(255,210,63,0.07)'
                             : i % 2 === 0 ? '#0B0C10' : '#0E0F14',
@@ -152,8 +174,8 @@ export default function OwnersPage() {
                         </td>
                         <td style={{ padding: '12px 16px' }}>
                           <img
-                            src={block.image_url}
-                            alt={block.alt_text ?? ''}
+                            src={player.firstBlock.image_url}
+                            alt={player.firstBlock.alt_text ?? ''}
                             width={40}
                             height={40}
                             style={{ objectFit: 'cover', border: `1px solid ${isFirst ? '#FFD23F' : '#2A2C36'}`, borderRadius: 4 }}
@@ -167,7 +189,7 @@ export default function OwnersPage() {
                             color: '#B7B2A4',
                           }}
                         >
-                          {block.width}×{block.height}
+                          {player.blockCount}
                         </td>
                         <td
                           style={{
@@ -178,7 +200,7 @@ export default function OwnersPage() {
                             fontWeight: 600,
                           }}
                         >
-                          {(block.width * block.height).toLocaleString('pl-PL')}
+                          {player.totalPixels.toLocaleString('pl-PL')}
                         </td>
                         <td
                           style={{
@@ -188,18 +210,18 @@ export default function OwnersPage() {
                             color: '#B7B2A4',
                           }}
                         >
-                          {block.email}
+                          {player.email}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
-                          {block.link_url ? (
+                          {linkUrl ? (
                             <a
-                              href={safeHref(block.link_url)}
+                              href={safeHref(linkUrl)}
                               target="_blank"
                               rel="noopener noreferrer"
                               style={{ color: '#FF4D2E', textDecoration: 'none', fontSize: 13 }}
                             >
-                              {block.link_url.replace(/^https?:\/\//, '').slice(0, 28)}
-                              {block.link_url.length > 35 ? '…' : ''}
+                              {linkUrl.replace(/^https?:\/\//, '').slice(0, 28)}
+                              {linkUrl.length > 35 ? '…' : ''}
                             </a>
                           ) : <span style={{ color: '#54566a', fontSize: 13 }}>—</span>}
                         </td>
@@ -211,7 +233,7 @@ export default function OwnersPage() {
                             color: '#5A5C66',
                           }}
                         >
-                          {new Date(block.created_at).toLocaleDateString('pl-PL')}
+                          {new Date(player.lastPurchaseAt).toLocaleDateString('pl-PL')}
                         </td>
                       </tr>
                     )
