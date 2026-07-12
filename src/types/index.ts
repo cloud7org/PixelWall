@@ -9,5 +9,6 @@ export interface PixelBlock {
   owner_name: string | null
   alt_text: string | null
   email: string
+  has_frame: boolean
   created_at: string
 }

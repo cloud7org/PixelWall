@@ -29,3 +29,21 @@ export function calculatePrice(x: number, y: number, w: number, h: number) {
 export function formatPln(amount: number) {
   return `${amount.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} zł`
 }
+
+const FRAME_TIERS = [
+  { max: 10_000, price: 19.99, width: 4 },
+  { max: 30_000, price: 29.99, width: 5 },
+  { max: Infinity, price: 49.99, width: 5 },
+]
+
+function frameTier(totalPixels: number) {
+  return FRAME_TIERS.find(t => totalPixels <= t.max) ?? FRAME_TIERS[FRAME_TIERS.length - 1]
+}
+
+export function calculateFramePrice(totalPixels: number) {
+  return frameTier(totalPixels).price
+}
+
+export function calculateFrameWidth(totalPixels: number) {
+  return frameTier(totalPixels).width
+}

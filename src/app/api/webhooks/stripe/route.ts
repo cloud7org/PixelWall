@@ -44,13 +44,19 @@ export async function POST(request: NextRequest) {
           const isOverlapping = (blocks ?? []).some(b => overlaps(order.x, order.y, order.width, order.height, b))
 
           if (!isOverlapping) {
-            await supabaseAdmin.from('pixel_blocks').insert({
+            const { error: blockInsErr } = await supabaseAdmin.from('pixel_blocks').insert({
               id: order.id,
               x: order.x, y: order.y, width: order.width, height: order.height,
               image_url: order.image_url, link_url: order.link_url,
               owner_name: order.owner_name, alt_text: order.alt_text, email: order.email,
+              has_frame: order.has_frame,
               privacy_consent: true, privacy_consent_at: new Date().toISOString(),
             })
+            if (blockInsErr) {
+              console.error('[webhook] pixel_blocks insert failed:', blockInsErr.message, { orderId: order.id, hasFrame: order.has_frame })
+            } else {
+              console.log('[webhook] pixel_blocks inserted:', { orderId: order.id, hasFrame: order.has_frame })
+            }
 
             await sendPaymentSuccessEmail({
               orderId: order.id,

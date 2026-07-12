@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { CENTRAL_W, CENTRAL_H } from '@/lib/pricing'
 import { drawPremiumZone } from '@/lib/drawPremiumZone'
+import { drawBlockFrame } from '@/lib/drawBlockFrame'
 
 interface Props {
   onHover: (block: PixelBlock | null) => void
@@ -23,6 +24,7 @@ interface Props {
   onBlockClick?: (block: PixelBlock, screenRect: { x: number; y: number; width: number; height: number }) => void
   draftSel?: { x: number; y: number; w: number; h: number }
   draftImageUrl?: string
+  draftHasFrame?: boolean
   onSelChange?: (sel: { x: number; y: number; w: number; h: number }) => void
 }
 
@@ -34,7 +36,7 @@ export default function PixelGrid({
   onHover, onBlocksLoaded, onNewBlock, onZoomChange,
   externalScale, reinitKey, resetViewKey, fetchKey, showHint, isMobile, toolMode, onToolModeChange,
   onDragSelectComplete, onBlockClick,
-  draftSel, draftImageUrl, onSelChange,
+  draftSel, draftImageUrl, draftHasFrame, onSelChange,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const blocksRef = useRef<PixelBlock[]>([])
@@ -68,6 +70,7 @@ export default function PixelGrid({
   // Draft image refs
   const draftSelRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
   const draftImgRef = useRef<HTMLImageElement | null>(null)
+  const draftHasFrameRef = useRef(false)
   const draftDragRef = useRef<{
     mode: 'move' | 'nw' | 'ne' | 'sw' | 'se'
     startGridX: number
@@ -81,6 +84,7 @@ export default function PixelGrid({
   useEffect(() => { onBlockClickRef.current = onBlockClick }, [onBlockClick])
   useEffect(() => { onToolModeChangeRef.current = onToolModeChange }, [onToolModeChange])
   useEffect(() => { draftSelRef.current = draftSel ?? null }, [draftSel])
+  useEffect(() => { draftHasFrameRef.current = !!draftHasFrame }, [draftHasFrame])
   useEffect(() => { onSelChangeRef.current = onSelChange }, [onSelChange])
 
   const snap = (v: number) => Math.round(v / 10) * 10
@@ -207,8 +211,10 @@ export default function PixelGrid({
       ctx.stroke()
     }
 
+    const elapsedMs = performance.now() - mountTimeRef.current
+
     // Premium zone — gold tint + shimmer + border + corner label
-    drawPremiumZone(ctx, scale, performance.now() - mountTimeRef.current)
+    drawPremiumZone(ctx, scale, elapsedMs)
 
     // Existing blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#F5F0E6']
@@ -230,6 +236,9 @@ export default function PixelGrid({
           imagesRef.current.set(block.id, image)
         }
       }
+      if (block.has_frame) {
+        drawBlockFrame(ctx, block.x, block.y, block.width, block.height, scale, block.width * block.height, elapsedMs)
+      }
     })
 
     // Draft image overlay (bottom sheet edit mode)
@@ -243,6 +252,9 @@ export default function PixelGrid({
       } else {
         ctx.fillStyle = 'rgba(255,77,46,0.18)'
         ctx.fillRect(ds.x, ds.y, ds.w, ds.h)
+      }
+      if (draftHasFrameRef.current) {
+        drawBlockFrame(ctx, ds.x, ds.y, ds.w, ds.h, scale, ds.w * ds.h, elapsedMs)
       }
       ctx.strokeStyle = '#FF4D2E'
       ctx.lineWidth = 2 / scale

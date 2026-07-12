@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
-import { calculatePrice, formatPln } from '@/lib/pricing'
+import { calculatePrice, calculateFramePrice, formatPln } from '@/lib/pricing'
 import { resizeImageForStorage } from '@/lib/image'
 
 interface Props {
@@ -13,11 +13,12 @@ interface Props {
   onClose: () => void
   onSuccess: () => void
   onSelChange?: (sel: { x: number; y: number; w: number; h: number }) => void
+  onHasFrameChange?: (hasFrame: boolean) => void
 }
 
 const PEEK_HEIGHT = 40
 
-export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess, onSelChange }: Props) {
+export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess, onSelChange, onHasFrameChange }: Props) {
   const [visible, setVisible] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [widthInput, setWidthInput] = useState(String(sel.w))
@@ -25,6 +26,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   const [email, setEmail] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [altText, setAltText] = useState('')
+  const [hasFrame, setHasFrame] = useState(false)
   const [privacyConsent, setPrivacyConsent] = useState(false)
   const [termsConsent, setTermsConsent]     = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -42,6 +44,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
   // (e.g. dragging the corner handles of the draft rectangle on the canvas).
   useEffect(() => { setWidthInput(String(sel.w)) }, [sel.w])
   useEffect(() => { setHeightInput(String(sel.h)) }, [sel.h])
+  useEffect(() => { onHasFrameChange?.(hasFrame) }, [hasFrame, onHasFrameChange])
 
   const commitWidth = () => {
     const n = Number(widthInput)
@@ -127,8 +130,9 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
     })
   }, [])
 
-  const { premiumPixels, standardPixels, premiumSubtotal, standardSubtotal, price } =
+  const { premiumPixels, standardPixels, totalPixels, premiumSubtotal, standardSubtotal, price } =
     calculatePrice(sel.x, sel.y, sel.w, sel.h)
+  const frameCost = hasFrame ? calculateFramePrice(totalPixels) : 0
 
   // Consent/submit section only slides out once the required fields are filled, so
   // the sheet stays compact (~30% of viewport) and leaves more of the grid visible
@@ -162,7 +166,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
         body: JSON.stringify({
           x: sel.x, y: sel.y, w: sel.w, h: sel.h,
           imageUrl: urlData.publicUrl, linkUrl: linkUrl || null,
-          ownerName: null, altText: altText || null, email,
+          ownerName: null, altText: altText || null, email, hasFrame,
         }),
       })
       const data = await res.json()
@@ -256,7 +260,7 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
               fontSize: 18,
               flexShrink: 0,
             }}>
-              {formatPln(price)}
+              {formatPln(price + frameCost)}
             </span>
             <button
               type="button"
@@ -286,6 +290,17 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
               marginBottom: 8,
             }}>
               Premium: {formatPln(premiumSubtotal)} · Standard: {formatPln(standardSubtotal)}
+            </div>
+          )}
+
+          {hasFrame && (
+            <div style={{
+              color: '#5A5C66',
+              fontFamily: 'var(--font-jetbrains-mono), monospace',
+              fontSize: 10,
+              marginBottom: 8,
+            }}>
+              + Ramka świecąca: {formatPln(frameCost)}
             </div>
           )}
 
@@ -352,6 +367,19 @@ export default function BuyBottomSheet({ sel, file, imageUrl, onClose, onSuccess
               />
             </div>
           </div>
+
+          {/* Checkbox ramki */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', marginBottom: 10 }}>
+            <input
+              type="checkbox"
+              checked={hasFrame}
+              onChange={e => setHasFrame(e.target.checked)}
+              style={{ marginTop: 2, flexShrink: 0, accentColor: '#2EE6A6', width: 14, height: 14 }}
+            />
+            <span style={{ color: '#B7B2A4', fontSize: 11, fontFamily: 'var(--font-jetbrains-mono), monospace', lineHeight: 1.5 }}>
+              Dodaj świecącą ramkę (+{formatPln(calculateFramePrice(totalPixels))})
+            </span>
+          </label>
           </div>{/* end scrollable */}
 
           {/* Sticky footer: checkbox + error + button — slides out once required fields are filled */}

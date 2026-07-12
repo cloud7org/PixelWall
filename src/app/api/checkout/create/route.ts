@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { stripe } from '@/lib/stripe'
-import { calculatePrice } from '@/lib/pricing'
+import { calculatePrice, calculateFramePrice } from '@/lib/pricing'
 
 function overlaps(x: number, y: number, w: number, h: number, b: { x: number; y: number; width: number; height: number }) {
   return x < b.x + b.width && x + w > b.x && y < b.y + b.height && y + h > b.y
@@ -9,10 +9,10 @@ function overlaps(x: number, y: number, w: number, h: number, b: { x: number; y:
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { x, y, w, h, imageUrl, linkUrl, ownerName, altText, email: rawEmail } = body as {
+  const { x, y, w, h, imageUrl, linkUrl, ownerName, altText, email: rawEmail, hasFrame } = body as {
     x: number; y: number; w: number; h: number
     imageUrl: string; linkUrl: string | null; ownerName: string | null
-    altText: string | null; email: string
+    altText: string | null; email: string; hasFrame: boolean
   }
   const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : rawEmail
 
@@ -42,20 +42,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Ten obszar nakłada się na istniejący blok. Wybierz inne miejsce.' }, { status: 409 })
   }
 
-  const { price } = calculatePrice(x, y, w, h)
+  const { price, totalPixels } = calculatePrice(x, y, w, h)
+  const frameCost = hasFrame ? calculateFramePrice(totalPixels) : 0
   const id = crypto.randomUUID()
   const origin = request.nextUrl.origin
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
-    line_items: [{
-      price_data: {
-        currency: 'pln',
-        product_data: { name: `Piksele ${w}×${h} px` },
-        unit_amount: Math.round(price * 100),
+    line_items: [
+      {
+        price_data: {
+          currency: 'pln',
+          product_data: { name: `Piksele ${w}×${h} px` },
+          unit_amount: Math.round(price * 100),
+        },
+        quantity: 1,
       },
-      quantity: 1,
-    }],
+      ...(hasFrame ? [{
+        price_data: {
+          currency: 'pln',
+          product_data: { name: 'Ramka świecąca' },
+          unit_amount: Math.round(frameCost * 100),
+        },
+        quantity: 1,
+      }] : []),
+    ],
     client_reference_id: id,
     metadata: { pending_order_id: id },
     customer_email: email,
@@ -70,7 +81,8 @@ export async function POST(request: NextRequest) {
     id, x, y, width: w, height: h,
     image_url: imageUrl, link_url: linkUrl,
     owner_name: ownerName, alt_text: altText, email,
-    amount_pln: price, stripe_session_id: session.id,
+    has_frame: !!hasFrame,
+    amount_pln: price + frameCost, stripe_session_id: session.id,
   })
 
   if (insErr) {

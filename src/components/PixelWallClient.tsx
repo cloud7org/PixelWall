@@ -23,6 +23,7 @@ export default function PixelWallClient() {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false)
   const [toolMode, setToolMode] = useState<'pan' | 'draw'>('pan')
   const [dragSel, setDragSel] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
+  const [dragHasFrame, setDragHasFrame] = useState(false)
   const [sheetFile, setSheetFile] = useState<File | null>(null)
   const [sheetImageUrl, setSheetImageUrl] = useState<string | null>(null)
   const [tooltip, setTooltip] = useState<PixelBlock | null>(null)
@@ -103,6 +104,7 @@ export default function PixelWallClient() {
     setBottomSheetOpen(false)
     setSheetFile(null)
     setDragSel(null)
+    setDragHasFrame(false)
     setToolMode('pan')
   }, [])
 
@@ -110,6 +112,7 @@ export default function PixelWallClient() {
     setBottomSheetOpen(false)
     setSheetFile(null)
     setDragSel(null)
+    setDragHasFrame(false)
     setToolMode('pan')
     setFetchKey(k => (k ?? 0) + 1)
   }, [])
@@ -144,6 +147,7 @@ export default function PixelWallClient() {
           onBlockClick={handleBlockClick}
           draftSel={bottomSheetOpen ? dragSel ?? undefined : undefined}
           draftImageUrl={bottomSheetOpen && sheetImageUrl ? sheetImageUrl : undefined}
+          draftHasFrame={bottomSheetOpen ? dragHasFrame : undefined}
           onSelChange={setDragSel}
         />
 
@@ -312,6 +316,7 @@ export default function PixelWallClient() {
           onClose={handleBottomSheetClose}
           onSuccess={handleBottomSheetSuccess}
           onSelChange={setDragSel}
+          onHasFrameChange={setDragHasFrame}
         />
       )}
 

@@ -7,6 +7,7 @@ import BackToGridCornerButton from '@/components/BackToGridCornerButton'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { calculateFrameWidth } from '@/lib/pricing'
 
 function safeHref(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
@@ -173,13 +174,43 @@ export default function OwnersPage() {
                           </span>
                         </td>
                         <td style={{ padding: '12px 16px' }}>
-                          <img
-                            src={player.firstBlock.image_url}
-                            alt={player.firstBlock.alt_text ?? ''}
-                            width={40}
-                            height={40}
-                            style={{ objectFit: 'cover', border: `1px solid ${isFirst ? '#FFD23F' : '#2A2C36'}`, borderRadius: 4 }}
-                          />
+                          <div style={{ position: 'relative', width: 40, height: 40, flexShrink: 0 }}>
+                            <img
+                              src={player.firstBlock.image_url}
+                              alt={player.firstBlock.alt_text ?? ''}
+                              width={40}
+                              height={40}
+                              style={{
+                                objectFit: 'cover',
+                                border: `1px solid ${isFirst ? '#FFD23F' : '#2A2C36'}`,
+                                borderRadius: 4,
+                              }}
+                            />
+                            {player.firstBlock.has_frame && (
+                              <>
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    borderRadius: 4,
+                                    pointerEvents: 'none',
+                                    animation: 'auroraGlow 6s linear infinite',
+                                    '--fw': `${calculateFrameWidth(player.firstBlock.width * player.firstBlock.height)}px`,
+                                  } as React.CSSProperties}
+                                />
+                                <div style={{ position: 'absolute', inset: 0, borderRadius: 4, overflow: 'hidden', pointerEvents: 'none' }}>
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      background: 'linear-gradient(100deg, transparent 15%, rgba(64,255,170,0.65) 35%, rgba(80,220,255,0.75) 50%, rgba(170,110,255,0.65) 65%, transparent 85%)',
+                                      animation: 'shimmer 1.8s linear infinite',
+                                    }}
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </td>
                         <td
                           style={{

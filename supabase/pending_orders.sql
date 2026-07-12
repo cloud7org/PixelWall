@@ -16,6 +16,7 @@ create table if not exists pending_orders (
   owner_name text,
   alt_text text,
   email text not null,
+  has_frame boolean not null default false,
   amount_pln numeric(10, 2) not null,
   stripe_session_id text unique,
   status text not null default 'awaiting_payment',
@@ -29,3 +30,9 @@ create index if not exists pending_orders_status_idx on pending_orders (status);
 alter table pending_orders enable row level security;
 -- Brak polityk RLS celowo: tabela dostępna wyłącznie przez klienta z
 -- SUPABASE_SERVICE_ROLE_KEY (server-side route handlers), nigdy z przeglądarki.
+
+-- Migracja dla istniejącej tabeli (dodatek "świecąca ramka"):
+alter table pending_orders add column if not exists has_frame boolean not null default false;
+-- Tabela pixel_blocks nie ma pliku .sql w repo (schemat istnieje tylko live w Supabase),
+-- ale wymaga tej samej kolumny:
+alter table pixel_blocks add column if not exists has_frame boolean not null default false;

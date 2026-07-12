@@ -13,7 +13,7 @@ const AURORA_COLORS: [number, number, number][] = [
   [170, 110, 255], // violet
 ]
 
-function auroraColor(elapsedMs: number): [number, number, number] {
+export function auroraColor(elapsedMs: number): [number, number, number] {
   const n = AURORA_COLORS.length
   const phase = ((elapsedMs % AURORA_CYCLE_MS) / AURORA_CYCLE_MS) * n
   const i = Math.floor(phase) % n

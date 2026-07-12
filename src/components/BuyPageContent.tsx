@@ -6,8 +6,9 @@ import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import ToolModeToggle from './ToolModeToggle'
-import { CENTRAL_W, CENTRAL_H, calculatePrice, formatPln } from '@/lib/pricing'
+import { CENTRAL_W, CENTRAL_H, calculatePrice, calculateFramePrice, formatPln } from '@/lib/pricing'
 import { drawPremiumZone } from '@/lib/drawPremiumZone'
+import { drawBlockFrame } from '@/lib/drawBlockFrame'
 import { resizeImageForStorage } from '@/lib/image'
 
 const GRID_STEP = 20
@@ -77,6 +78,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const mountTimeRef   = useRef(performance.now())
   const selRef         = useRef<Sel>(defaultSel)
   const isOverlapRef   = useRef(false)
+  const hasFrameRef    = useRef(false)
 
   // Drag ref — mutated imperatively to avoid stale closures
   const dragRef = useRef<{
@@ -112,6 +114,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   const [termsConsent, setTermsConsent]     = useState(false)
   const [linkUrl, setLinkUrl]       = useState('')
   const [altText, setAltText]       = useState('')
+  const [hasFrame, setHasFrame]     = useState(false)
   const [imageFile, setImageFile]   = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [selW, setSelW]             = useState(String(defaultSel.w))
@@ -122,6 +125,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
 
   const { premiumPixels, standardPixels, totalPixels, premiumSubtotal, standardSubtotal, price } =
     calculatePrice(sel.x, sel.y, sel.w, sel.h)
+  const frameCost = hasFrame ? calculateFramePrice(totalPixels) : 0
 
   // Sync refs with state
   useEffect(() => {
@@ -131,6 +135,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
   }, [sel])
   useEffect(() => { toolModeRef.current    = toolMode    }, [toolMode])
   useEffect(() => { snapEnabledRef.current = snapEnabled }, [snapEnabled])
+  useEffect(() => { hasFrameRef.current    = hasFrame    }, [hasFrame])
 
   // Mobile: default to pan mode so single-finger drag scrolls like users expect
   useEffect(() => {
@@ -252,8 +257,10 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
       ctx.stroke()
     }
 
+    const elapsedMs = performance.now() - mountTimeRef.current
+
     // Premium zone — gold tint + shimmer + border + corner label
-    drawPremiumZone(ctx, scale, performance.now() - mountTimeRef.current)
+    drawPremiumZone(ctx, scale, elapsedMs)
 
     // Sold blocks
     const blockColors = ['#FF4D2E', '#2EE6A6', '#FFD23F', '#F5F0E6']
@@ -274,6 +281,9 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           imagesRef.current.set(block.id, image)
         }
       }
+      if (block.has_frame) {
+        drawBlockFrame(ctx, block.x, block.y, block.width, block.height, scale, block.width * block.height, elapsedMs)
+      }
     })
 
     // Selection — vermilion
@@ -283,6 +293,9 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
     // Uploaded image preview inside selection
     if (imageImgRef.current) {
       ctx.drawImage(imageImgRef.current, s.x, s.y, s.w, s.h)
+    }
+    if (hasFrameRef.current) {
+      drawBlockFrame(ctx, s.x, s.y, s.w, s.h, scale, s.w * s.h, elapsedMs)
     }
     // Outer glow
     ctx.strokeStyle = 'rgba(255,77,46,0.25)'
@@ -716,7 +729,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
         body: JSON.stringify({
           x: sel.x, y: sel.y, w: sel.w, h: sel.h,
           imageUrl: urlData.publicUrl, linkUrl: linkUrl || null,
-          ownerName: null, altText: altText || null, email,
+          ownerName: null, altText: altText || null, email, hasFrame,
         }),
       })
       const data = await res.json()
@@ -974,6 +987,19 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           </div>
         ))}
 
+        {/* Checkbox ramki */}
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', marginBottom: 16 }}>
+          <input
+            type="checkbox"
+            checked={hasFrame}
+            onChange={e => setHasFrame(e.target.checked)}
+            style={{ marginTop: 3, flexShrink: 0, accentColor: '#2EE6A6', width: 14, height: 14 }}
+          />
+          <span style={{ color: '#B7B2A4', fontSize: 11, fontFamily: 'var(--font-jetbrains-mono), monospace', lineHeight: 1.6 }}>
+            Dodaj świecącą ramkę (+{formatPln(calculateFramePrice(totalPixels))})
+          </span>
+        </label>
+
         {/* Price summary */}
         <div style={{ background: '#1A1C24', border: '1px solid #2A2C36', padding: 16, marginBottom: 18 }}>
           {[
@@ -983,6 +1009,9 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
               { label: 'Piksele premium (0,30 zł/px)',  val: formatPln(premiumSubtotal) },
               { label: 'Piksele standard (0,01 zł/px)', val: formatPln(standardSubtotal) },
             ] : []),
+            ...(hasFrame ? [
+              { label: 'Ramka świecąca', val: formatPln(frameCost) },
+            ] : []),
           ].map(({ label, val }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#B7B2A4', padding: '6px 0', borderBottom: '1px solid #1F212B' }}>
               <span>{label}</span>
@@ -991,7 +1020,7 @@ export default function BuyPageContent({ onClose, initialSel }: { onClose?: () =
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12 }}>
             <span style={{ fontFamily: 'var(--font-space-grotesk), sans-serif', fontWeight: 600, fontSize: 14, color: '#F5F0E6' }}>Do zapłaty</span>
-            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 26, color: '#2EE6A6' }}>{formatPln(price)}</span>
+            <span style={{ fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 700, fontSize: 26, color: '#2EE6A6' }}>{formatPln(price + frameCost)}</span>
           </div>
         </div>
 
