@@ -7,7 +7,6 @@ import BackToGridCornerButton from '@/components/BackToGridCornerButton'
 import { supabase } from '@/lib/supabase'
 import type { PixelBlock } from '@/types'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
-import { calculatePrice, formatPln } from '@/lib/pricing'
 
 function safeHref(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
@@ -108,7 +107,7 @@ export default function OwnersPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
                 <thead>
                   <tr style={{ background: '#14151B', borderBottom: '1px solid #1F212B' }}>
-                    {['Miejsce', 'Podgląd', 'Rozmiar', 'Piksele', 'Cena', 'Link', 'Data'].map(h => (
+                    {['Miejsce', 'Podgląd', 'Rozmiar', 'Piksele', 'Email', 'Link', 'Data'].map(h => (
                       <th
                         key={h}
                         style={{
@@ -186,11 +185,10 @@ export default function OwnersPage() {
                             padding: '12px 16px',
                             fontFamily: 'var(--font-jetbrains-mono), monospace',
                             fontSize: 13,
-                            color: '#FFD23F',
-                            fontWeight: 600,
+                            color: '#B7B2A4',
                           }}
                         >
-                          {formatPln(calculatePrice(block.x, block.y, block.width, block.height).price)}
+                          {block.email}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
                           {block.link_url ? (

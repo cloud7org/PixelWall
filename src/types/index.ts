@@ -8,5 +8,6 @@ export interface PixelBlock {
   link_url: string
   owner_name: string | null
   alt_text: string | null
+  email: string
   created_at: string
 }

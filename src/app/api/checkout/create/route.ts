@@ -9,11 +9,12 @@ function overlaps(x: number, y: number, w: number, h: number, b: { x: number; y:
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { x, y, w, h, imageUrl, linkUrl, ownerName, altText, email } = body as {
+  const { x, y, w, h, imageUrl, linkUrl, ownerName, altText, email: rawEmail } = body as {
     x: number; y: number; w: number; h: number
     imageUrl: string; linkUrl: string | null; ownerName: string | null
     altText: string | null; email: string
   }
+  const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : rawEmail
 
   if (
     typeof x !== 'number' || typeof y !== 'number' ||
